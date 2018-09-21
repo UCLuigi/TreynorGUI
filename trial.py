@@ -12,7 +12,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Project")
-        self.root.geometry("800x800")
+        self.root.geometry("1000x700")
         self.root.configure(background='grey')
         self.upload_button = Button(root,
                                     text="Upload .scn file",
@@ -33,21 +33,32 @@ class App:
                     "Error", "You should name your scn file and your tif image the same")
             else:
                 img = cv2.imread(img_path, -1)
-                if img.dtype == 'uint16':
+                if img.dtype != 'uint16':
                     messagebox.showerror(
                         "Error", "You need to export 16-bit image...")
                 else:
                     #e = xml.etree.ElementTree.parse(file_path).getroot()
                     self.mappings = {}
+                    path_map = path_map = "./16bit_calibration.dat"
+
+                    with open(path_map, "r") as map_f:
+                        for line in map_f:
+                            intensity, volume = line.rstrip().split(",")
+                            self.mappings[intensity] = float(volume)
+
+                    # e = xml.etree.ElementTree.parse().getroot()
+                    # with open(file_path, "r") as f:
+                    #     for line in f:
+                    #         print(line)
 
                     self.img = img
                     self.upload_button.pack_forget()
 
-                    self.topframe = Frame(self.root, bg="green")
+                    self.topframe = Frame(self.root)
                     self.topframe.pack(fill=BOTH)
 
-                    self.bottomframe = Frame(self.root, bg="blue")
-                    self.bottomframe.pack(fill=BOTH, side=BOTTOM)
+                    # self.bottomframe = Frame(self.root)
+                    # self.bottomframe.pack(fill=BOTH, side=BOTTOM)
                     # self.label = Label(self.bottomframe, "Lanes")
                     # self.label2 = Label(self.bottomframe, "Adjusted Volume")
 
@@ -63,12 +74,56 @@ class App:
                     # pack the canvas into a frame/form
                     self.canvas.pack(fill=BOTH)
 
+                    def map_uint16_to_uint8(img, lower_bound=None, upper_bound=None):
+                        '''
+                        Map a 16-bit image trough a lookup table to convert it to 8-bit.
+
+                        Parameters
+                        ----------
+                        img: numpy.ndarray[np.uint16]
+                            image that should be mapped
+                        lower_bound: int, optional
+                            lower bound of the range that should be mapped to ``[0, 255]``,
+                            value must be in the range ``[0, 65535]`` and smaller than `upper_bound`
+                            (defaults to ``numpy.min(img)``)
+                        upper_bound: int, optional
+                        upper bound of the range that should be mapped to ``[0, 255]``,
+                        value must be in the range ``[0, 65535]`` and larger than `lower_bound`
+                        (defaults to ``numpy.max(img)``)
+
+                        Returns
+                        -------
+                        numpy.ndarray[uint8]
+                        '''
+                        if lower_bound is not None and not(0 <= lower_bound < 2**16):
+                            raise ValueError(
+                                '"lower_bound" must be in the range [0, 65535]')
+                        if upper_bound is not None and not(0 <= upper_bound < 2**16):
+                            raise ValueError(
+                                '"upper_bound" must be in the range [0, 65535]')
+                        if lower_bound is None:
+                            lower_bound = np.min(img)
+                        if upper_bound is None:
+                            upper_bound = np.max(img)
+                        if lower_bound >= upper_bound:
+                            raise ValueError(
+                                '"lower_bound" must be smaller than "upper_bound"')
+                        lut = np.concatenate([
+                            np.zeros(lower_bound, dtype=np.uint16),
+                            np.linspace(0, 255, upper_bound -
+                                        lower_bound).astype(np.uint16),
+                            np.ones(2**16 - upper_bound, dtype=np.uint16) * 255
+                        ])
+                        return lut[img].astype(np.uint8)
+
+                    i = map_uint16_to_uint8(self.img)
+
                     # load the .gif image file
                     # image = tk.PhotoImage(file=img_path)
-                    i = self.img.astype(np.uint8)
+                    # i = self.img.astype(np.uint8)
 
-                    im = Image.open(img_path)
-                    # im = Image.fromarray(i, mode="RGB")
+                    # im = Image.open(img_path)
+                    im = Image.fromarray(i, mode="L")
                     # table=[ i/256 for i in range(65536) ]
                     # im2 = im.point(table,'L')
 
@@ -103,16 +158,82 @@ class App:
 
                     # dnd.dnd_start(self.rect)
 
+                    lane1 = Lane(1, 10, 10)
+                    lane1.attach(self.canvas)
+
                     # self.rect = Canvas(self.root, width=97, height=57)
                     # self.rect.create_image(0,0, image=self.img)
                     # #rect = self.canvas.create_rectangle(300, 350, 397, 407)
-                    self.rect.bind('<Button 1>', self.trial)
-                    self.rect.pack()
-                    dnd.dnd_start(self.rect, self.trial)
+                    # self.rect.bind('<Button 1>', self.trial)
+                    # self.rect.pack()
+                    # dnd.dnd_start(self.rect, self.trial)
 
-    def trial(event):
-        print("Mouse clicked")
-        print("clicked at ", event.x, event.y)
+    # def trial(event):
+    #     print("Mouse clicked")
+    #     print("clicked at ", event.x, event.y)
+
+
+class Lane:
+
+    def __init__(self, number, x, y):
+        self.id = number
+        self.x = x
+        self.y = y
+        self.canvas = self.label = None
+
+    def attach(self, canvas):
+        if canvas is self.canvas:
+            self.canvas.coords(self.id, self.x, self.y)
+            return
+        if self.canvas:
+            self.detach()
+        if not canvas:
+            return
+        label = Label(canvas, text="Lane" + str(self.id),
+                      borderwidth=2, relief="raised")
+        #id = canvas.create_window(self.x, self.y, window=label, anchor="nw")
+        self.canvas = canvas
+        self.label = label
+        #self.id = id
+        label.bind("<ButtonPress>", self.press)
+
+    def detach(self):
+        canvas = self.canvas
+        if not canvas:
+            return
+        id = self.id
+        label = self.label
+        self.canvas = self.label = self.id = None
+        canvas.delete(id)
+        label.destroy()
+
+    def press(self, event):
+        if dnd.dnd_start(self, event):
+            # where the pointer is relative to the label widget:
+            self.x_off = event.x
+            self.y_off = event.y
+            # where the widget is relative to the canvas:
+            self.x_orig, self.y_orig = self.canvas.coords(self.id)
+
+    def move(self, event):
+        x, y = self.where(self.canvas, event)
+        self.canvas.coords(self.id, x, y)
+
+    def putback(self):
+        self.canvas.coords(self.id, self.x_orig, self.y_orig)
+
+    def where(self, canvas, event):
+        # where the corner of the canvas is relative to the screen:
+        x_org = canvas.winfo_rootx()
+        y_org = canvas.winfo_rooty()
+        # where the pointer is relative to the canvas widget:
+        x = event.x_root - x_org
+        y = event.y_root - y_org
+        # compensate for initial pointer offset
+        return x - self.x_off, y - self.y_off
+
+    def dnd_end(self, target, event):
+        pass
 
 
 class DragDropWidget:
@@ -174,51 +295,6 @@ class DnDFrame(DragDropWidget, Frame):
 
     # def draw_rectangles():
     # 	self.canvas.create_rectangle(100, 100, 197, 157, fill='red')
-
-
-class VerticalScrolledFrame(Frame):
-    """A pure Tkinter scrollable frame that actually works!
-    * Use the 'interior' attribute to place widgets inside the scrollable frame
-    * Construct and pack/place/grid normally
-    * This frame only allows vertical scrolling
-    """
-
-    def __init__(self, parent, *args, **kw):
-        Frame.__init__(self, parent, *args, **kw)
-
-        # create a canvas object and a vertical scrollbar for scrolling it
-        vscrollbar = Scrollbar(self, orient=VERTICAL)
-        vscrollbar.pack(fill=Y, side=RIGHT, expand=FALSE)
-        canvas = Canvas(self, bd=0, highlightthickness=0,
-                        yscrollcommand=vscrollbar.set)
-        canvas.pack(side=LEFT, fill=BOTH, expand=TRUE)
-        vscrollbar.config(command=canvas.yview)
-
-        # reset the view
-        canvas.xview_moveto(0)
-        canvas.yview_moveto(0)
-
-        # create a frame inside the canvas which will be scrolled with it
-        self.interior = interior = Frame(canvas)
-        interior_id = canvas.create_window(0, 0, window=interior,
-                                           anchor=NW)
-
-        # track changes to the canvas and frame width and sync them,
-        # also updating the scrollbar
-        def _configure_interior(event):
-            # update the scrollbars to match the size of the inner frame
-            size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
-            canvas.config(scrollregion="0 0 %s %s" % size)
-            if interior.winfo_reqwidth() != canvas.winfo_width():
-                # update the canvas's width to fit the inner frame
-                canvas.config(width=interior.winfo_reqwidth())
-        interior.bind('<Configure>', _configure_interior)
-
-        def _configure_canvas(event):
-            if interior.winfo_reqwidth() != canvas.winfo_width():
-                # update the inner frame's width to fill the canvas
-                canvas.itemconfigure(interior_id, width=canvas.winfo_width())
-        canvas.bind('<Configure>', _configure_canvas)
 
 
 #file_path = filedialog.askopenfilename()
