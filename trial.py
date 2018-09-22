@@ -12,16 +12,35 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Project")
-        self.root.geometry("1000x700")
+        self.root.geometry("1000x800")
         self.root.configure(background='grey')
-        self.upload_button = Button(root,
-                                    text="Upload .scn file",
-                                    command=self.look_up_image
-                                    )
-        self.upload_button.bind('<Button 1>', self.look_up_image)
-        self.upload_button.pack(fill=X)
 
-    def look_up_image(self, event):
+        def donothing():
+            filewin = Toplevel(root)
+            button = Button(filewin, text="Do nothing button")
+            button.pack()
+        menubar = Menu(root)
+        filemenu = Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open file", command=self.look_up_image)
+        filemenu.add_command(label="Optomize Adj Vol", command=donothing)
+        filemenu.add_command(label="Export table", command=donothing)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=root.quit)
+        menubar.add_cascade(label="File", menu=filemenu)
+        root.config(menu=menubar)
+
+        # self.upload_button = Button(root,
+        #                             text="Upload .scn file",
+        #                             command=self.look_up_image
+        #                             )
+        # self.upload_button.bind('<Button 1>', self.look_up_image)
+        # self.upload_button.pack(fill=X)
+
+    def look_up_image(self):
+        '''
+        Function that looks for a tif image given an scn file.
+        Error checks if it doesn't find image and if it's not 16-bit.
+        '''
         file_path = filedialog.askopenfilename(filetypes=(("Scn files", "*.scn"),
                                                           ("All Files", "*.*")),
                                                title="Choose a file."
@@ -37,7 +56,7 @@ class App:
                     messagebox.showerror(
                         "Error", "You need to export 16-bit image...")
                 else:
-                    #e = xml.etree.ElementTree.parse(file_path).getroot()
+                    # e = xml.etree.ElementTree.parse(file_path).getroot()
                     self.mappings = {}
                     path_map = path_map = "./16bit_calibration.dat"
 
@@ -52,7 +71,7 @@ class App:
                     #         print(line)
 
                     self.img = img
-                    self.upload_button.pack_forget()
+                    # self.upload_button.pack_forget()
 
                     self.topframe = Frame(self.root)
                     self.topframe.pack(fill=BOTH)
@@ -148,18 +167,30 @@ class App:
                     # button1_window = self.canvas.create_window(120, 325, anchor=NW, window=self.rect)
                     # #self.rect.bind('<Button 1>', self.trial)
 
-                    notesFrame = DnDFrame(self.topframe, bd=5, bg="blue")
-                    notesFrame.place(x=10, y=10)
-                    notes = Label(notesFrame, text="Lane 1")
-                    notes.pack()
+                    # notesFrame = DnDFrame(self.topframe, bd=3, bg="blue")
+                    # notesFrame.place(x=10, y=10)
+                    # notes = Label(notesFrame, text="Lane 1")
+                    # notes.pack()
 
+                    c = Canvas(self.canvas, width=97, height=57,
+                               highlightthickness=4, highlightbackground="blue")
+                    # t_i = cv2.imread('trans.jpg')
+                    # t_img = Image.fromarray(t_i)
+                    t_img = Image.open('trans.png')
+                    ph = ImageTk.PhotoImage(t_img)
+                    self.ph = ph
+                    # t_img = t_img.resize((57, 97), Image.ANTIALIAS)
+                    # new('RGBA', (97, 57), (0, 0, 0, 0))
+                    c.create_image(0, 0, image=self.ph, anchor=NW)
+                    c.create_text(30, 30, fill="blue", text="Lane 1")
+                    c.place(x=10, y=10)
                     # dnd = DragManager()
                     # dnd.add_dragable(self.rect)
 
                     # dnd.dnd_start(self.rect)
-
-                    lane1 = Lane(1, 10, 10)
-                    lane1.attach(self.canvas)
+                    # t1 = Tester(self.canvas)
+                    # lane1 = Lane(10, 10)
+                    # lane1.attach(t1.canvas)
 
                     # self.rect = Canvas(self.root, width=97, height=57)
                     # self.rect.create_image(0,0, image=self.img)
@@ -167,7 +198,8 @@ class App:
                     # self.rect.bind('<Button 1>', self.trial)
                     # self.rect.pack()
                     # dnd.dnd_start(self.rect, self.trial)
-
+    def setup(self):
+        pass
     # def trial(event):
     #     print("Mouse clicked")
     #     print("clicked at ", event.x, event.y)
@@ -175,11 +207,11 @@ class App:
 
 class Lane:
 
-    def __init__(self, number, x, y):
-        self.id = number
+    def __init__(self, x, y):
+        # self.id = number
         self.x = x
         self.y = y
-        self.canvas = self.label = None
+        self.canvas = self.label = self.id = None
 
     def attach(self, canvas):
         if canvas is self.canvas:
@@ -189,13 +221,13 @@ class Lane:
             self.detach()
         if not canvas:
             return
-        label = Label(canvas, text="Lane" + str(self.id),
+        label = Label(canvas, text="Lane",
                       borderwidth=2, relief="raised")
-        #id = canvas.create_window(self.x, self.y, window=label, anchor="nw")
+        id = canvas.create_window(self.x, self.y, window=label, anchor="nw")
         self.canvas = canvas
         self.label = label
-        #self.id = id
-        label.bind("<ButtonPress>", self.press)
+        self.id = id
+        self.label.bind("<ButtonPress>", self.press)
 
     def detach(self):
         canvas = self.canvas
@@ -234,6 +266,44 @@ class Lane:
 
     def dnd_end(self, target, event):
         pass
+
+    def find_opt(self):
+        pass
+
+
+class Tester:
+
+    def __init__(self, root):
+        self.top = Toplevel(root)
+        self.canvas = Canvas(self.top, width=100, height=100)
+        self.canvas.pack(fill="both", expand=1)
+        self.canvas.dnd_accept = self.dnd_accept
+
+    def dnd_accept(self, source, event):
+        return self
+
+    def dnd_enter(self, source, event):
+        self.canvas.focus_set()  # Show highlight border
+        x, y = source.where(self.canvas, event)
+        x1, y1, x2, y2 = source.canvas.bbox(source.id)
+        dx, dy = x2-x1, y2-y1
+        self.dndid = self.canvas.create_rectangle(x, y, x+dx, y+dy)
+        self.dnd_motion(source, event)
+
+    def dnd_motion(self, source, event):
+        x, y = source.where(self.canvas, event)
+        x1, y1, x2, y2 = self.canvas.bbox(self.dndid)
+        self.canvas.move(self.dndid, x-x1, y-y1)
+
+    def dnd_leave(self, source, event):
+        self.top.focus_set()  # Hide highlight border
+        self.canvas.delete(self.dndid)
+        self.dndid = None
+
+    def dnd_commit(self, source, event):
+        self.dnd_leave(source, event)
+        x, y = source.where(self.canvas, event)
+        source.attach(self.canvas, x, y)
 
 
 class DragDropWidget:
@@ -297,7 +367,7 @@ class DnDFrame(DragDropWidget, Frame):
     # 	self.canvas.create_rectangle(100, 100, 197, 157, fill='red')
 
 
-#file_path = filedialog.askopenfilename()
+# file_path = filedialog.askopenfilename()
 # # Code to add widgets will go here...
 # w = tk.Canvas(root, height=250, width=300)
 # filename = PhotoImage(file = "sunshine.gif")
