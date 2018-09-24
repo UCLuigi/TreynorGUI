@@ -329,50 +329,6 @@ class DnDFrame(DragDropWidget, Frame):
     pass
 
 
-# class DragManager():
-#     def add_dragable(self, widget):
-#         widget.bind("<ButtonPress-1>", self.on_start)
-#         widget.bind("<B1-Motion>", self.on_drag)
-#         widget.bind("<ButtonRelease-1>", self.on_drop)
-#         # widget.configure(cursor="hand1")
-
-#     def on_start(self, event):
-#         # you could use this method to create a floating window
-#         # that represents what is being dragged.
-#         # self.drag_start_x = event.x
-#         # self.drag_start_y = event.y
-#         pass
-
-#     def on_drag(self, event):
-#         # you could use this method to move a floating window that
-#         # represents what you're dragging
-#         # x = self.winfo_x() - self.drag_start_x + event.x
-#         # y = self.winfo_y() - self.drag_start_y + event.y
-#         # self.place(x=x, y=y)
-#         pass
-
-#     def on_drop(self, event):
-#         # find the widget under the cursor
-#         x, y = event.widget.winfo_pointerxy()
-#         target = event.widget.winfo_containing(x, y)
-#         try:
-#             target.configure(image=event.widget.cget("image"))
-#         except:
-#             pass
-
-    # #The Pack geometry manager packs widgets in rows or columns.
-    # panel.pack(side = "bottom", fill = "both", expand = "yes")
-
-    # def draw_rectangles():
-    # 	self.canvas.create_rectangle(100, 100, 197, 157, fill='red')
-
-
-# file_path = filedialog.askopenfilename()
-# # Code to add widgets will go here...
-# w = tk.Canvas(root, height=250, width=300)
-# filename = PhotoImage(file = "sunshine.gif")
-# image = canvas.create_image(50, 50, anchor=NE, image=filename)
-# w.pack()
 if __name__ == '__main__':
     root = Tk()
     app = App(root)
