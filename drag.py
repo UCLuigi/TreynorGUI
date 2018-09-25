@@ -114,11 +114,9 @@ class Lane:
 
     def attach(self, canvas, x=10, y=10):
         if canvas is self.canvas:
-            # print(str(x) + ", " + str(y))
             self.canvas.coords(self.id, x, y)
             return
         if self.canvas:
-            print("OR")
             self.detach()
         if not canvas:
             return
@@ -128,6 +126,7 @@ class Lane:
         self.canvas = canvas
         self.label = label
         self.id = id
+        label.focus_set()
         label.bind("<ButtonPress>", self.press)
         # label.bind('<Left>', self.left)
         # label.bind('<Right>', self.right)
@@ -145,6 +144,12 @@ class Lane:
         label.destroy()
 
     def press(self, event):
+        # self.selected = source.label
+        self.label.focus_set()
+        self.label.bind('<Left>', self.left)
+        self.label.bind('<Right>', self.right)
+        self.label.bind('<Up>', self.up)
+        self.label.bind('<Down>', self.down)
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -174,31 +179,31 @@ class Lane:
 
     def left(self, event):
         print("left")
-        x, y = self.where(self.canvas, event)
-        self.canvas.coords(self.id, x - 1, y)
+        x, y = self.canvas.coords(self.id)
+        # self.canvas.coords(self.id, x - 1, y)
         print(str(x-1) + ", " + str(y))
-        # self.attach(self.canvas, x-1, y)
+        self.attach(self.canvas, x-1, y)
 
     def right(self, event):
         print("right")
-        x, y = self.where(self.canvas, event)
-        self.canvas.coords(self.id, x + 1, y)
+        x, y = self.canvas.coords(self.id)
+        # self.canvas.coords(self.id, x + 1, y)
         print(str(x+1) + ", " + str(y))
-        # self.attach(self.canvas, x+1, y)
+        self.attach(self.canvas, x+1, y)
 
     def up(self, event):
         print("up")
-        x, y = self.where(self.canvas, event)
-        self.canvas.coords(self.id, x, y - 1)
+        x, y = self.canvas.coords(self.id)
+        # self.canvas.coords(self.id, x, y - 1)
         print(str(x) + ", " + str(y-1))
-        # self.attach(self.canvas, x, y-1)
+        self.attach(self.canvas, x, y-1)
 
     def down(self, event):
         print("down")
-        x, y = self.where(self.canvas, event)
-        self.canvas.coords(self.id, x, y + 1)
+        x, y = self.canvas.coords(self.id)
+        # self.canvas.coords(self.id, x, y + 1)
         print(str(x) + ", " + str(y+1))
-        # self.attach(self.canvas, x, y+1)
+        self.attach(self.canvas, x, y+1)
 
 
 class ImageCanvas:
@@ -296,10 +301,8 @@ def test():
     t1 = ImageCanvas(root)
     i1 = Lane("Lane 1")
     i1.attach(t1.canvas, 50, 50)
-    # i1.label.bind('<Left>', i1.left)
-    # i1.label.bind('<Right>', i1.right)
-    # i1.label.bind('<Up>', i1.up)
-    # i1.label.bind('<Down>', i1.down)
+    i2 = Lane("Lane 2")
+    i2.attach(t1.canvas, 200, 200)
     root.mainloop()
 
 
