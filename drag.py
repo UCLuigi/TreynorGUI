@@ -114,14 +114,16 @@ class Lane:
 
     def attach(self, canvas, x=10, y=10):
         if canvas is self.canvas:
+            # print(str(x) + ", " + str(y))
             self.canvas.coords(self.id, x, y)
             return
         if self.canvas:
+            print("OR")
             self.detach()
         if not canvas:
             return
         label = tkinter.Label(canvas, text=self.name,
-                              borderwidth=2, relief="raised")
+                              borderwidth=1, relief="ridge")
         id = canvas.create_window(x, y, window=label, anchor="nw")
         self.canvas = canvas
         self.label = label
@@ -174,18 +176,29 @@ class Lane:
         print("left")
         x, y = self.where(self.canvas, event)
         self.canvas.coords(self.id, x - 1, y)
+        print(str(x-1) + ", " + str(y))
+        # self.attach(self.canvas, x-1, y)
 
     def right(self, event):
+        print("right")
         x, y = self.where(self.canvas, event)
         self.canvas.coords(self.id, x + 1, y)
+        print(str(x+1) + ", " + str(y))
+        # self.attach(self.canvas, x+1, y)
 
     def up(self, event):
+        print("up")
         x, y = self.where(self.canvas, event)
         self.canvas.coords(self.id, x, y - 1)
+        print(str(x) + ", " + str(y-1))
+        # self.attach(self.canvas, x, y-1)
 
     def down(self, event):
+        print("down")
         x, y = self.where(self.canvas, event)
         self.canvas.coords(self.id, x, y + 1)
+        print(str(x) + ", " + str(y+1))
+        # self.attach(self.canvas, x, y+1)
 
 
 class ImageCanvas:
@@ -270,10 +283,11 @@ class ImageCanvas:
         source.attach(self.canvas, x, y)
         # self.canvas.focus_set()
         self.selected = source.label
-        # self.selected.bind('<Left>', source.left)
-        # self.selected.bind('<Right>', source.right)
-        # self.selected.bind('<Up>', source.up)
-        # self.selected.bind('<Down>', source.down)
+        self.selected.focus_set()
+        self.selected.bind('<Left>', source.left)
+        self.selected.bind('<Right>', source.right)
+        self.selected.bind('<Up>', source.up)
+        self.selected.bind('<Down>', source.down)
 
 
 def test():
