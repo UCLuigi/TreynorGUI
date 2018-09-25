@@ -106,7 +106,7 @@ class DndHandler:
 # ----------------------------------------------------------------------
 # The rest is here for testing and demonstration purposes only!
 
-class Icon:
+class Lane:
 
     def __init__(self, name):
         self.name = name
@@ -127,6 +127,10 @@ class Icon:
         self.label = label
         self.id = id
         label.bind("<ButtonPress>", self.press)
+        # label.bind('<Left>', self.left)
+        # label.bind('<Right>', self.right)
+        # label.bind('<Up>', self.up)
+        # label.bind('<Down>', self.down)
 
     def detach(self):
         canvas = self.canvas
@@ -166,65 +170,78 @@ class Icon:
     def dnd_end(self, target, event):
         pass
 
+    def left(self, event):
+        print("left")
+        x, y = self.where(self.canvas, event)
+        self.canvas.coords(self.id, x - 1, y)
+
+    def right(self, event):
+        x, y = self.where(self.canvas, event)
+        self.canvas.coords(self.id, x + 1, y)
+
+    def up(self, event):
+        x, y = self.where(self.canvas, event)
+        self.canvas.coords(self.id, x, y - 1)
+
+    def down(self, event):
+        x, y = self.where(self.canvas, event)
+        self.canvas.coords(self.id, x, y + 1)
+
 
 class ImageCanvas:
 
     def __init__(self, root):
-        self.canvas = tkinter.Canvas(root, width=100, height=100)
+        self.canvas = tkinter.Canvas(root, width=1000, height=700)
         img = cv2.imread("test4.tif", -1)
-
-        def map_uint16_to_uint8(img, lower_bound=None, upper_bound=None):
-            '''
-            Map a 16-bit image trough a lookup table to convert it to 8-bit.
-
-            Parameters
-            ----------
-            img: numpy.ndarray[np.uint16]
-                image that should be mapped
-            lower_bound: int, optional
-                lower bound of the range that should be mapped to ``[0, 255]``,
-                value must be in the range ``[0, 65535]`` and smaller than `upper_bound`
-                (defaults to ``numpy.min(img)``)
-            upper_bound: int, optional
-                upper bound of the range that should be mapped to ``[0, 255]``,
-                value must be in the range ``[0, 65535]`` and larger than `lower_bound`
-                (defaults to ``numpy.max(img)``)
-
-            Returns
-            -------
-            numpy.ndarray[uint8]
-            '''
-            if lower_bound is not None and not(0 <= lower_bound < 2**16):
-                raise ValueError(
-                    '"lower_bound" must be in the range [0, 65535]')
-            if upper_bound is not None and not(0 <= upper_bound < 2**16):
-                raise ValueError(
-                    '"upper_bound" must be in the range [0, 65535]')
-            if lower_bound is None:
-                lower_bound = np.min(img)
-            if upper_bound is None:
-                upper_bound = np.max(img)
-            if lower_bound >= upper_bound:
-                raise ValueError(
-                    '"lower_bound" must be smaller than "upper_bound"')
-            lut = np.concatenate([
-                np.zeros(lower_bound, dtype=np.uint16),
-                np.linspace(0, 255, upper_bound -
-                            lower_bound).astype(np.uint16),
-                np.ones(2**16 - upper_bound, dtype=np.uint16) * 255
-            ])
-            return lut[img].astype(np.uint8)
-
-        i = map_uint16_to_uint8(img)
-
+        i = self.map_uint16_to_uint8(img)
         im = Image.fromarray(i, mode="L")
-
         im = im.resize((1000, 700), Image.ANTIALIAS)
-
         self.img_label = ImageTk.PhotoImage(im)
         self.canvas.create_image(0, 0, image=self.img_label, anchor=NW)
         self.canvas.pack(fill="both", expand=1)
         self.canvas.dnd_accept = self.dnd_accept
+
+    def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
+        '''
+        Map a 16-bit image trough a lookup table to convert it to 8-bit.
+
+        Parameters
+        ----------
+        img: numpy.ndarray[np.uint16]
+            image that should be mapped
+        lower_bound: int, optional
+            lower bound of the range that should be mapped to ``[0, 255]``,
+            value must be in the range ``[0, 65535]`` and smaller than `upper_bound`
+            (defaults to ``numpy.min(img)``)
+        upper_bound: int, optional
+            upper bound of the range that should be mapped to ``[0, 255]``,
+            value must be in the range ``[0, 65535]`` and larger than `lower_bound`
+            (defaults to ``numpy.max(img)``)
+
+        Returns
+        -------
+        numpy.ndarray[uint8]
+        '''
+        if lower_bound is not None and not(0 <= lower_bound < 2**16):
+            raise ValueError(
+                '"lower_bound" must be in the range [0, 65535]')
+        if upper_bound is not None and not(0 <= upper_bound < 2**16):
+            raise ValueError(
+                '"upper_bound" must be in the range [0, 65535]')
+        if lower_bound is None:
+            lower_bound = np.min(img)
+        if upper_bound is None:
+            upper_bound = np.max(img)
+        if lower_bound >= upper_bound:
+            raise ValueError(
+                '"lower_bound" must be smaller than "upper_bound"')
+        lut = np.concatenate([
+            np.zeros(lower_bound, dtype=np.uint16),
+            np.linspace(0, 255, upper_bound -
+                        lower_bound).astype(np.uint16),
+            np.ones(2**16 - upper_bound, dtype=np.uint16) * 255
+        ])
+        return lut[img].astype(np.uint8)
 
     def dnd_accept(self, source, event):
         return self
@@ -251,14 +268,24 @@ class ImageCanvas:
         self.dnd_leave(source, event)
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
+        # self.canvas.focus_set()
+        self.selected = source.label
+        # self.selected.bind('<Left>', source.left)
+        # self.selected.bind('<Right>', source.right)
+        # self.selected.bind('<Up>', source.up)
+        # self.selected.bind('<Down>', source.down)
 
 
 def test():
     root = tkinter.Tk()
     root.geometry("1000x800")
     t1 = ImageCanvas(root)
-    i1 = Icon("ICON1")
+    i1 = Lane("Lane 1")
     i1.attach(t1.canvas, 50, 50)
+    # i1.label.bind('<Left>', i1.left)
+    # i1.label.bind('<Right>', i1.right)
+    # i1.label.bind('<Up>', i1.up)
+    # i1.label.bind('<Down>', i1.down)
     root.mainloop()
 
 
