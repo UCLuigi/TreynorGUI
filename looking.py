@@ -451,6 +451,7 @@ if __name__ == "__main__":
     # Create two canvases to act as the Target Widgets for the drag and drop. Note that
     #    these canvases will act as both the TargetWidget AND the TargetObject.
     TargetWidget_TargetObject = CanvasDnd(Root, relief=RAISED, bd=2)
+
     TargetWidget_TargetObject.pack(expand=YES, fill=BOTH)
 
     # Create an instance of a trash can so we can get rid of dragged objects

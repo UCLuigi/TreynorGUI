@@ -11,8 +11,10 @@ class App:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Project")
-        self.root.geometry("1000x800")
+        self.root.title("Treynor")
+        self.screen_width = root.winfo_screenwidth()
+        self.screen_height = root.winfo_screenheight()
+        self.root.geometry(str(self.screen_width)+"x"+str(self.screen_height))
         self.root.configure(background='grey')
 
         def donothing():
@@ -27,6 +29,11 @@ class App:
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=root.quit)
         menubar.add_cascade(label="File", menu=filemenu)
+
+        editmenu = Menu(menubar, tearoff=0)
+        editmenu.add_command(label="Add lane", command=self.create_lane)
+        menubar.add_cascade(label="Edit", menu=editmenu)
+
         root.config(menu=menubar)
 
         # self.upload_button = Button(root,
@@ -35,6 +42,9 @@ class App:
         #                             )
         # self.upload_button.bind('<Button 1>', self.look_up_image)
         # self.upload_button.pack(fill=X)
+
+    def create_lane(self):
+        pass
 
     def look_up_image(self):
         '''
@@ -304,29 +314,6 @@ class Tester:
         self.dnd_leave(source, event)
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
-
-
-class DragDropWidget:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.drag_start_x = 0
-        self.drag_start_y = 0
-        self.bind("<Button-1>", self.drag_start)
-        self.bind("<B1-Motion>", self.drag_motion)
-
-    def drag_start(self, event):
-        self.drag_start_x = event.x
-        self.drag_start_y = event.y
-
-    def drag_motion(self, event):
-        x = self.winfo_x() - self.drag_start_x + event.x
-        y = self.winfo_y() - self.drag_start_y + event.y
-        self.place(x=x, y=y)
-
-
-class DnDFrame(DragDropWidget, Frame):
-    pass
 
 
 if __name__ == '__main__':

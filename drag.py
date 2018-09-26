@@ -121,7 +121,7 @@ class Lane:
         if not canvas:
             return
         label = tkinter.Label(canvas, text=self.name,
-                              borderwidth=1, relief="ridge")
+                              borderwidth=1, relief="ridge", width=5)
         id = canvas.create_window(x, y, window=label, anchor="nw")
         self.canvas = canvas
         self.label = label
@@ -265,7 +265,6 @@ class ImageCanvas:
         self.selected.bind('<BackSpace>', source.delete)
 
     def optimize_lanes(self):
-
         pass
 
 
@@ -277,6 +276,9 @@ def test():
     i1.attach(t1.canvas, 50, 50)
     i2 = Lane("Lane 2")
     i2.attach(t1.canvas, 200, 200)
+
+    i3 = Lane("Lane 20")
+    i3.attach(t1.canvas, 400, 400)
     root.mainloop()
 
 
