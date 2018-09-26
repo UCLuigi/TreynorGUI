@@ -128,10 +128,6 @@ class Lane:
         self.id = id
         label.focus_set()
         label.bind("<ButtonPress>", self.press)
-        # label.bind('<Left>', self.left)
-        # label.bind('<Right>', self.right)
-        # label.bind('<Up>', self.up)
-        # label.bind('<Down>', self.down)
 
     def detach(self):
         canvas = self.canvas
@@ -144,12 +140,12 @@ class Lane:
         label.destroy()
 
     def press(self, event):
-        # self.selected = source.label
         self.label.focus_set()
         self.label.bind('<Left>', self.left)
         self.label.bind('<Right>', self.right)
         self.label.bind('<Up>', self.up)
         self.label.bind('<Down>', self.down)
+        self.label.bind('<BackSpace>', self.delete)
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -178,32 +174,26 @@ class Lane:
         pass
 
     def left(self, event):
-        print("left")
         x, y = self.canvas.coords(self.id)
-        # self.canvas.coords(self.id, x - 1, y)
-        print(str(x-1) + ", " + str(y))
         self.attach(self.canvas, x-1, y)
 
     def right(self, event):
-        print("right")
         x, y = self.canvas.coords(self.id)
-        # self.canvas.coords(self.id, x + 1, y)
-        print(str(x+1) + ", " + str(y))
         self.attach(self.canvas, x+1, y)
 
     def up(self, event):
-        print("up")
         x, y = self.canvas.coords(self.id)
-        # self.canvas.coords(self.id, x, y - 1)
-        print(str(x) + ", " + str(y-1))
         self.attach(self.canvas, x, y-1)
 
     def down(self, event):
-        print("down")
         x, y = self.canvas.coords(self.id)
-        # self.canvas.coords(self.id, x, y + 1)
-        print(str(x) + ", " + str(y+1))
         self.attach(self.canvas, x, y+1)
+
+    def delete(self, event):
+        self.detach()
+
+    def optomize_lane(self):
+        pass
 
 
 class ImageCanvas:
@@ -220,26 +210,6 @@ class ImageCanvas:
         self.canvas.dnd_accept = self.dnd_accept
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
-        '''
-        Map a 16-bit image trough a lookup table to convert it to 8-bit.
-
-        Parameters
-        ----------
-        img: numpy.ndarray[np.uint16]
-            image that should be mapped
-        lower_bound: int, optional
-            lower bound of the range that should be mapped to ``[0, 255]``,
-            value must be in the range ``[0, 65535]`` and smaller than `upper_bound`
-            (defaults to ``numpy.min(img)``)
-        upper_bound: int, optional
-            upper bound of the range that should be mapped to ``[0, 255]``,
-            value must be in the range ``[0, 65535]`` and larger than `lower_bound`
-            (defaults to ``numpy.max(img)``)
-
-        Returns
-        -------
-        numpy.ndarray[uint8]
-        '''
         if lower_bound is not None and not(0 <= lower_bound < 2**16):
             raise ValueError(
                 '"lower_bound" must be in the range [0, 65535]')
@@ -286,13 +256,17 @@ class ImageCanvas:
         self.dnd_leave(source, event)
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
-        # self.canvas.focus_set()
         self.selected = source.label
         self.selected.focus_set()
         self.selected.bind('<Left>', source.left)
         self.selected.bind('<Right>', source.right)
         self.selected.bind('<Up>', source.up)
         self.selected.bind('<Down>', source.down)
+        self.selected.bind('<BackSpace>', source.delete)
+
+    def optimize_lanes(self):
+
+        pass
 
 
 def test():
