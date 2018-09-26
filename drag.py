@@ -198,9 +198,9 @@ class Lane:
 
 class ImageCanvas:
 
-    def __init__(self, root):
+    def __init__(self, root, image_path):
         self.canvas = tkinter.Canvas(root, width=1000, height=700)
-        img = cv2.imread("test4.tif", -1)
+        img = cv2.imread(image_path, -1)
         i = self.map_uint16_to_uint8(img)
         im = Image.fromarray(i, mode="L")
         im = im.resize((1000, 700), Image.ANTIALIAS)
@@ -268,19 +268,18 @@ class ImageCanvas:
         pass
 
 
-def test():
-    root = tkinter.Tk()
-    root.geometry("1000x800")
-    t1 = ImageCanvas(root)
-    i1 = Lane("Lane 1")
-    i1.attach(t1.canvas, 50, 50)
-    i2 = Lane("Lane 2")
-    i2.attach(t1.canvas, 200, 200)
+# def test():
+#     root = tkinter.Tk()
+#     root.geometry("1000x800")
+#     t1 = ImageCanvas(root, "test4.tif")
+#     i1 = Lane("Lane 1")
+#     i1.attach(t1.canvas, 50, 50)
+#     i2 = Lane("Lane 2")
+#     i2.attach(t1.canvas, 200, 200)
+#     i3 = Lane("Lane 20")
+#     i3.attach(t1.canvas, 400, 400)
+#     root.mainloop()
 
-    i3 = Lane("Lane 20")
-    i3.attach(t1.canvas, 400, 400)
-    root.mainloop()
 
-
-if __name__ == '__main__':
-    test()
+# if __name__ == '__main__':
+#     test()
