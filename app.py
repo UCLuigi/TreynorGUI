@@ -34,13 +34,6 @@ class App:
 
         root.config(menu=menubar)
 
-        # self.upload_button = Button(root,
-        #                             text="Upload .scn file",
-        #                             command=self.look_up_image
-        #                             )
-        # self.upload_button.bind('<Button 1>', self.look_up_image)
-        # self.upload_button.pack(fill=X)
-
     def look_up_image(self):
         '''
         Function that looks for a tif image given an scn file.
@@ -86,7 +79,7 @@ class App:
         self.image_canvas = ImageCanvas(
             self.topframe, self.img_path, self.mappings, self.screen_width, self.image_height)
         self.lanes = []
-        x = 0
+        # x = 0
         # for i in range(20):
         #     lane = Lane("Lane"+str(i+1))
         #     lane.attach(self.image_canvas.canvas, 10 + x, 40)

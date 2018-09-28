@@ -202,22 +202,20 @@ class Lane:
         self.detach()
 
     def optimize_lane(self):
-        # x, y = self.canvas.coords(self.id)
+        x, y = self.canvas.coords(self.id)
         # convert to original x and y
-        # max_adj = float("-inf")
-        # max_info = None
-        # loop through x-10 to x+10
-        # loop through y-10 to y+10
-        # cur_calc = self.calculate(x, y)
-        # if cur_calc[0] > max_adj:
-        # max_adj = cur_calc[0]
-        # max_info =
-        #
-        # self.
-        pass
+        max_adj = float("-inf")
+        max_info = None
+        for i in range(x-10, x+10):
+            for j in range(y-10, y+10):
+                cur_calc = self.calculate(x, y)
+                cur_adj = cur_calc[0]
+                if max_adj < cur_adj:
+                    max_info = cur_calc
+        print(max_info)
+        return max_info
 
     def calculate(self, x=None, y=None):
-        print("calculating")
         if x and y:
             x, y = self.canvas.coords(self.id)
         # convert x and y for original
