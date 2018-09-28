@@ -108,13 +108,21 @@ class DndHandler:
 
 class Lane:
 
+    total_pixels = 54*96
+    width_ratio = 1
+    heigth_ratio = 1
+    mappings = {}
+    img = None
+
     def __init__(self, name):
         self.name = name
         self.canvas = self.label = self.id = None
 
     def attach(self, canvas, x=10, y=10):
+        print("Called")
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
+            print(self.calculate(x, y))
             return
         if self.canvas:
             self.detach()
@@ -126,6 +134,7 @@ class Lane:
         self.canvas = canvas
         self.label = label
         self.id = id
+        print(self.calculate(x, y))
         label.focus_set()
         label.bind("<ButtonPress>", self.press)
 
@@ -192,20 +201,90 @@ class Lane:
     def delete(self, event):
         self.detach()
 
-    def optomize_lane(self):
+    def optimize_lane(self):
+        # x, y = self.canvas.coords(self.id)
+        # convert to original x and y
+        # max_adj = float("-inf")
+        # max_info = None
+        # loop through x-10 to x+10
+        # loop through y-10 to y+10
+        # cur_calc = self.calculate(x, y)
+        # if cur_calc[0] > max_adj:
+        # max_adj = cur_calc[0]
+        # max_info =
+        #
+        # self.
         pass
+
+    def calculate(self, x=None, y=None):
+        print("calculating")
+        if x and y:
+            x, y = self.canvas.coords(self.id)
+        # convert x and y for original
+
+        print("GUI x: ", x)
+        print("GUI y: ", y)
+
+        x = int(x * self.width_ratio)
+        y = int(y * self.height_ratio)
+
+        print("New x: ", x)
+        print("New y: ", y)
+        w = 96
+        h = 54
+
+        print(self.img.shape)
+
+        # crop image
+        crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
+
+        # summing the total volume of box by grabbing each mapping
+        vol = 0
+        for i in range(1, h+1):
+            for j in range(1, w+1):
+                m = self.mappings[str(crop_img[i, j])]
+                vol += m
+        print("Volume OD: ", vol)
+
+        # Get mean background of bigger box
+        mean_b = 0
+        for j in range(0, h):
+            mean_b += self.mappings[str(crop_img[j, 0])] + \
+                self.mappings[str(crop_img[j, w-1])]
+        for i in range(1, w-1):
+            mean_b += self.mappings[str(crop_img[0, i])] + \
+                self.mappings[str(crop_img[h-1, i])]
+
+        mean_b /= (w * 2) + ((h-2) * 2)
+        print("Mean Bkgd: ", mean_b)
+
+        adj_vol = vol - (self.total_pixels * mean_b)
+        print("Adj Vol: ", adj_vol)
+
+        return adj_vol, mean_b, vol, (x, y)
 
 
 class ImageCanvas:
 
-    def __init__(self, root, image_path):
-        self.canvas = tkinter.Canvas(root, width=1000, height=700)
-        img = cv2.imread(image_path, -1)
-        i = self.map_uint16_to_uint8(img)
+    def __init__(self, root, image_path, mappings, i_width, i_height):
+        self.canvas = tkinter.Canvas(root, width=i_width, height=i_height)
+        self.img_info = cv2.imread(image_path, -1)
+        self.map = mappings
+
+        i = self.map_uint16_to_uint8(self.img_info)
         im = Image.fromarray(i, mode="L")
-        im = im.resize((1000, 700), Image.ANTIALIAS)
+        self.width_ratio = self.img_info.shape[0] / i_width
+        self.height_ratio = self.img_info.shape[1] / i_height
+
+        Lane.width_ratio = self.width_ratio
+        Lane.height_ratio = self.height_ratio
+        Lane.mappings = self.map
+        Lane.img = self.img_info
+
+        im = im.resize((i_width, i_height), Image.ANTIALIAS)
         self.img_label = ImageTk.PhotoImage(im)
         self.canvas.create_image(0, 0, image=self.img_label, anchor=NW)
+
         self.canvas.pack(fill="both", expand=1)
         self.canvas.dnd_accept = self.dnd_accept
 
@@ -265,21 +344,5 @@ class ImageCanvas:
         self.selected.bind('<BackSpace>', source.delete)
 
     def optimize_lanes(self):
+        # for lane in self.lanes
         pass
-
-
-# def test():
-#     root = tkinter.Tk()
-#     root.geometry("1000x800")
-#     t1 = ImageCanvas(root, "test4.tif")
-#     i1 = Lane("Lane 1")
-#     i1.attach(t1.canvas, 50, 50)
-#     i2 = Lane("Lane 2")
-#     i2.attach(t1.canvas, 200, 200)
-#     i3 = Lane("Lane 20")
-#     i3.attach(t1.canvas, 400, 400)
-#     root.mainloop()
-
-
-# if __name__ == '__main__':
-#     test()
