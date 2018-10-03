@@ -50,11 +50,13 @@ class App:
                                                )
         if file_path != '':
             img_path = file_path[:-3] + "tif"
+            # Check if image exists
             if not os.path.exists(img_path):
                 messagebox.showerror(
                     "Error", "You should name your scn file and your tif image the same")
             else:
                 img = cv2.imread(img_path, -1)
+                # Check if image is 16 bits
                 if img.dtype != 'uint16':
                     messagebox.showerror(
                         "Error", "You need to export 16-bit image...")
@@ -136,6 +138,11 @@ class App:
         # throw error
         # else
         # start creating table
+
+        # output_file = self.img_path.split(".")[0] + ".csv"
+        # with open(output_file, "w") as f_write:
+        #     for lane in self.image_canvas.lanes:
+
         pass
 
 

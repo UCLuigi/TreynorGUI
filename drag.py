@@ -128,8 +128,16 @@ class Lane:
             self.detach()
         if not canvas:
             return
-        label = tkinter.Label(canvas, text=self.name,
-                              borderwidth=1, relief="ridge", width=5)
+
+        h = int((54 / 1293) * self.img_canvas.max_height)
+        print("Box height: ", h)
+        w = int((96 / 2273) * self.img_canvas.max_width)
+        print("Box width: ", w)
+        label = tkinter.Canvas(canvas, height=h, width=w, highlightthickness=1)
+        label.create_text(w/2, h/2, text=self.name)
+
+        # label = tkinter.Label(canvas, text=self.name,
+        #                       borderwidth=1, relief="ridge", width=5, height=1)
         id = canvas.create_window(x, y, window=label, anchor="nw")
         self.canvas = canvas
         self.label = label
@@ -357,11 +365,15 @@ class ImageCanvas:
         # self.lanes.append(lane)
         # pass
 
+        # add column on table
+
     def remove_lane(self, source):
-        # for lane in lanes:
+        # for lane in self.lanes:
         #     if lane.id == source.id:
         #         lanes.remove(lane)
         # source.detach()
+
+        # remove column on table
 
         pass
 
