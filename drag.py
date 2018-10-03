@@ -113,13 +113,13 @@ class Lane:
     heigth_ratio = 1
     mappings = {}
     img = None
+    img_canvas = None
 
     def __init__(self, name):
         self.name = name
         self.canvas = self.label = self.id = None
 
     def attach(self, canvas, x=10, y=10):
-        print("Called")
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
             print(self.calculate(x, y))
@@ -154,7 +154,7 @@ class Lane:
         self.label.bind('<Right>', self.right)
         self.label.bind('<Up>', self.up)
         self.label.bind('<Down>', self.down)
-        self.label.bind('<BackSpace>', self.delete)
+        self.label.bind('<BackSpace>', self.img_canvas.remove_lane)
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -208,7 +208,7 @@ class Lane:
         max_info = None
         for i in range(x-10, x+10):
             for j in range(y-10, y+10):
-                cur_calc = self.calculate(x, y)
+                cur_calc = self.calculate(i, j)
                 cur_adj = cur_calc[0]
                 if max_adj < cur_adj:
                     max_info = cur_calc
@@ -216,7 +216,7 @@ class Lane:
         return max_info
 
     def calculate(self, x=None, y=None):
-        if x and y:
+        if x == None and y == None:
             x, y = self.canvas.coords(self.id)
         # convert x and y for original
 
@@ -235,6 +235,7 @@ class Lane:
 
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
+        print(crop_img.shape)
 
         # summing the total volume of box by grabbing each mapping
         vol = 0
@@ -266,24 +267,29 @@ class ImageCanvas:
 
     def __init__(self, root, image_path, mappings, i_width, i_height):
         self.canvas = tkinter.Canvas(root, width=i_width, height=i_height)
+        self.max_width = i_width
+        self.max_height = i_height
         self.img_info = cv2.imread(image_path, -1)
         self.map = mappings
 
         i = self.map_uint16_to_uint8(self.img_info)
         im = Image.fromarray(i, mode="L")
-        self.width_ratio = self.img_info.shape[0] / i_width
-        self.height_ratio = self.img_info.shape[1] / i_height
+        self.width_ratio = self.img_info.shape[1] / i_width
+        print("Img info shape : ", self.img_info.shape)
+        self.height_ratio = self.img_info.shape[0] / i_height
+        self.lanes = []
 
         Lane.width_ratio = self.width_ratio
         Lane.height_ratio = self.height_ratio
         Lane.mappings = self.map
         Lane.img = self.img_info
+        Lane.img_canvas = self
 
         im = im.resize((i_width, i_height), Image.ANTIALIAS)
         self.img_label = ImageTk.PhotoImage(im)
         self.canvas.create_image(0, 0, image=self.img_label, anchor=NW)
 
-        self.canvas.pack(fill="both", expand=1)
+        self.canvas.pack(fill=BOTH)
         self.canvas.dnd_accept = self.dnd_accept
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
@@ -339,8 +345,34 @@ class ImageCanvas:
         self.selected.bind('<Right>', source.right)
         self.selected.bind('<Up>', source.up)
         self.selected.bind('<Down>', source.down)
-        self.selected.bind('<BackSpace>', source.delete)
+        # self.selected.bind('<BackSpace>', source.delete)
+        # self.selected.bind('<BackSpace>', self.remove_lane)
+
+    def add_lane(self):
+        number = len(self.lanes) + 1
+        lane = Lane("Lane" + str(number))
+        lane.attach(self.canvas, self.max_width / 2, 40)
+        self.lanes.append(lane)
+
+        # self.lanes.append(lane)
+        # pass
+
+    def remove_lane(self, source):
+        # for lane in lanes:
+        #     if lane.id == source.id:
+        #         lanes.remove(lane)
+        # source.detach()
+
+        pass
 
     def optimize_lanes(self):
-        # for lane in self.lanes
+        # for lane in self.lanes:
+        #     lane.optimize_lane()
+        # update table
+        pass
+
+
+class Table:
+
+    def __init__(self):
         pass

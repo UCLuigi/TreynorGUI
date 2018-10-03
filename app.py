@@ -11,8 +11,13 @@ class App:
         self.root = root
         self.root.title("Treynor")
         self.screen_width = root.winfo_screenwidth()
+        print("Screen width: ", self.screen_width)
         self.screen_height = root.winfo_screenheight()
+        print("Screen heigth: ", self.screen_height)
+
         self.image_height = int(self.screen_height * (8/10))
+
+        print("Image height: ", self.image_height)
         self.root.geometry(str(self.screen_width)+"x"+str(self.screen_height))
         self.root.configure(background='grey')
         menubar = Menu(root)
@@ -73,12 +78,12 @@ class App:
         '''
         self.topframe = Frame(
             self.root, width=self.screen_width, height=self.image_height)
-        self.topframe.pack(fill=BOTH)
-        self.bottomframe = Frame(self.root)
+        self.topframe.pack()
+        self.bottomframe = Frame(self.root, width=self.screen_width)
         self.bottomframe.pack(fill=BOTH, side=BOTTOM)
         self.image_canvas = ImageCanvas(
             self.topframe, self.img_path, self.mappings, self.screen_width, self.image_height)
-        self.lanes = []
+        # self.lanes = []
         # x = 0
         # for i in range(20):
         #     lane = Lane("Lane"+str(i+1))
@@ -86,22 +91,42 @@ class App:
         #     # self.image_canvas.add_lane()
         #     x += 65
         # self.lanes.append(lane)
+        width = 6
+        table = Label(self.bottomframe, text="Lane",
+                      relief="solid", width=width)
+        table.grid(row=0, column=0)
+        for i in range(20):
+            lane = Label(self.bottomframe, text=str(
+                i+1), relief="solid", width=width)
+            lane.grid(row=0, column=i+1)
+
+        # height = 5
+        # width = 5
+
+        volume = Label(self.bottomframe, text="Adj Vol",
+                       relief="solid", width=width)
+        volume.grid(row=1, column=0)
+        for i in range(20):
+            lane = Label(self.bottomframe, text=str(0),
+                         relief="solid", width=width)
+            lane.grid(row=1, column=i+1)
 
     def create_lane(self):
         '''
         Action from menu to add a lane onto the ImageCanvas
         '''
-        number = len(self.lanes) + 1
-        lane = Lane("Lane" + str(number))
-        lane.attach(self.image_canvas.canvas, self.screen_width / 2, 40)
-        self.lanes.append(lane)
+        # number = len(self.lanes) + 1
+        # lane = Lane("Lane" + str(number))
+        # lane.attach(self.image_canvas.canvas, self.screen_width / 2, 40)
+        # self.lanes.append(lane)
+
+        self.image_canvas.add_lane()
 
     def optimize_lanes(self):
         '''
         Action from menu to optimize volume of all lanes
         '''
-        # self.image_canvas.optimize_lanes()
-        pass
+        self.image_canvas.optimize_lanes()
 
     def export(self):
         '''
