@@ -122,7 +122,7 @@ class Lane:
     def attach(self, canvas, x=10, y=10):
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
-            print(self.calculate())
+
             self.label.delete(self.adj)
 
             e = self.calculate()
@@ -238,15 +238,10 @@ class Lane:
         print("------END--------")
         print(max_info)
         x, y = max_info[3]
-        print("Image x: ", x)
-        print("Image y: ", y)
-        print(self.width_ratio)
+
         x = int(x / self.width_ratio)
-        print(self.height_ratio)
         y = int(y / self.height_ratio)
 
-        print("Gui x: ", x)
-        print("Gui y: ", y)
         # self.attach(self.canvas, x, y)
         self.canvas.coords(self.id, x, y)
         return max_info
@@ -269,8 +264,6 @@ class Lane:
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
 
-        print("Box shape: ", crop_img.shape)
-
         # summing the total volume of box by grabbing each mapping
         vol = 0
         for i in range(1, h+1):
@@ -281,14 +274,14 @@ class Lane:
 
         # Get mean background of bigger box
         mean_b = 0
-        for j in range(0, h):
+        for j in range(0, h+2):
             mean_b += self.mappings[str(crop_img[j, 0])] + \
-                self.mappings[str(crop_img[j, w-1])]
+                self.mappings[str(crop_img[j, w+1])]
         for i in range(1, w-1):
             mean_b += self.mappings[str(crop_img[0, i])] + \
-                self.mappings[str(crop_img[h-1, i])]
+                self.mappings[str(crop_img[h+1, i])]
 
-        mean_b /= (w * 2) + ((h-2) * 2)
+        mean_b /= ((w+2) * 2) + (h * 2)
         print("Mean Bkgd: ", mean_b)
 
         adj_vol = vol - (self.total_pixels * mean_b)
@@ -309,7 +302,6 @@ class ImageCanvas:
         i = self.map_uint16_to_uint8(self.img_info)
         im = Image.fromarray(i, mode="L")
         self.width_ratio = self.img_info.shape[1] / i_width
-        print("Img info shape : ", self.img_info.shape)
         self.height_ratio = self.img_info.shape[0] / i_height
         self.lanes = []
 
@@ -401,11 +393,3 @@ class ImageCanvas:
     def optimize_lanes(self):
         for lane in self.lanes:
             lane.optimize_lane()
-        # update table
-        pass
-
-
-class Table:
-
-    def __init__(self):
-        pass
