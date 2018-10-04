@@ -65,7 +65,7 @@ class App:
                     self.img_path = img_path
                     self.img = img
                     self.mappings = {}
-
+                    # Parse scn file
                     with open(file_path, encoding="utf8", errors='ignore') as f:
                         for line in f:
                             l = line.lstrip().rstrip()
@@ -80,12 +80,6 @@ class App:
                             if l[:17] == '<scan_resolution>':
                                 l = l[17:-18]
                                 self.scale = float(l)
-
-                    # with open(path_map, "r") as map_f:
-                    #     for line in map_f:
-                    #         intensity, volume = line.rstrip().split(",")
-                    #         self.mappings[intensity] = float(volume)
-
                     self.setup()
 
     def setup(self):
@@ -94,39 +88,29 @@ class App:
         Creates a table
         '''
         self.topframe = Frame(
-            self.root, width=self.screen_width, height=self.image_height)
+            self.root, width=self.screen_width, height=self.screen_height)
         self.topframe.pack()
-        self.bottomframe = Frame(self.root, width=self.screen_width)
-        self.bottomframe.pack(fill=BOTH, side=BOTTOM)
+        # self.bottomframe = Frame(self.root, width=self.screen_width)
+        # self.bottomframe.pack(fill=BOTH, side=BOTTOM)
         self.image_canvas = ImageCanvas(
-            self.topframe, self.img_path, self.mappings, self.screen_width, self.image_height)
-        # self.lanes = []
-        # x = 0
+            self.topframe, self.img_path, self.mappings, self.screen_width, self.screen_height)
+
+        # width = 6
+        # table = Label(self.bottomframe, text="Lane",
+        #               relief="solid", width=width)
+        # table.grid(row=0, column=0)
         # for i in range(20):
-        #     lane = Lane("Lane"+str(i+1))
-        #     lane.attach(self.image_canvas.canvas, 10 + x, 40)
-        #     # self.image_canvas.add_lane()
-        #     x += 65
-        # self.lanes.append(lane)
-        width = 6
-        table = Label(self.bottomframe, text="Lane",
-                      relief="solid", width=width)
-        table.grid(row=0, column=0)
-        for i in range(20):
-            lane = Label(self.bottomframe, text=str(
-                i+1), relief="solid", width=width)
-            lane.grid(row=0, column=i+1)
+        #     lane = Label(self.bottomframe, text=str(
+        #         i+1), relief="solid", width=width)
+        #     lane.grid(row=0, column=i+1)
 
-        # height = 5
-        # width = 5
-
-        volume = Label(self.bottomframe, text="Adj Vol",
-                       relief="solid", width=width)
-        volume.grid(row=1, column=0)
-        for i in range(20):
-            lane = Label(self.bottomframe, text=str(0),
-                         relief="solid", width=width)
-            lane.grid(row=1, column=i+1)
+        # volume = Label(self.bottomframe, text="Adj Vol",
+        #                relief="solid", width=width)
+        # volume.grid(row=1, column=0)
+        # for i in range(20):
+        #     lane = Label(self.bottomframe, text=str(0),
+        #                  relief="solid", width=width)
+        #     lane.grid(row=1, column=i+1)
 
     def create_lane(self):
         '''

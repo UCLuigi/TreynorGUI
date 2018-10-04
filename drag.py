@@ -108,9 +108,9 @@ class DndHandler:
 
 class Lane:
 
-    total_pixels = 54*96
+    total_pixels = 55*97
     width_ratio = 1
-    heigth_ratio = 1
+    height_ratio = 1
     mappings = {}
     img = None
     img_canvas = None
@@ -122,10 +122,10 @@ class Lane:
     def attach(self, canvas, x=10, y=10):
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
-            print(self.calculate(x, y))
+            print(self.calculate())
             self.label.delete(self.adj)
 
-            e = self.calculate(x, y)
+            e = self.calculate()
             adj = e[0]
             self.adj = self.label.create_text(self.w/2, 3*self.h/4,
                                               text=str(round(adj, 2)))
@@ -135,10 +135,9 @@ class Lane:
         if not canvas:
             return
 
-        self.h = int((54 / 1293) * self.img_canvas.max_height)
-        print("Box height: ", self.h)
-        self.w = int((96 / 2273) * self.img_canvas.max_width)
-        print("Box width: ", self.w)
+        self.h = int((55 / 1293) * self.img_canvas.max_height)
+        self.w = int((97 / 2273) * self.img_canvas.max_width)
+
         label = tkinter.Canvas(canvas, height=self.h,
                                width=self.w, highlightthickness=1)
         label.create_text(self.w/2, self.h/4, text=self.name)
@@ -149,7 +148,7 @@ class Lane:
         self.canvas = canvas
         self.label = label
         self.id = id
-        e = self.calculate(x, y)
+        e = self.calculate()
         adj = e[0]
         self.adj = self.label.create_text(
             self.w/2, 3*self.h/4, text=str(round(adj, 2)))
@@ -173,7 +172,7 @@ class Lane:
         self.label.bind('<Right>', self.right)
         self.label.bind('<Up>', self.up)
         self.label.bind('<Down>', self.down)
-        self.label.bind('<BackSpace>', self.img_canvas.remove_lane)
+        #self.label.bind('<BackSpace>', self.img_canvas.remove_lane)
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -221,10 +220,9 @@ class Lane:
         self.detach()
 
     def optimize_lane(self):
-        print("------START--------")
         x, y = self.canvas.coords(self.id)
-        x = int(x)
-        y = int(y)
+        x = int(x * self.width_ratio)
+        y = int(y * self.height_ratio)
         # convert to original x and y
         max_adj = float("-inf")
         max_info = None
@@ -234,36 +232,44 @@ class Lane:
                 cur_calc = self.calculate(i, j)
                 cur_adj = cur_calc[0]
                 if max_adj < cur_adj:
+                    print("Adj changed... ", cur_calc)
                     max_info = cur_calc
+                    max_adj = cur_adj
         print("------END--------")
         print(max_info)
         x, y = max_info[3]
+        print("Image x: ", x)
+        print("Image y: ", y)
+        print(self.width_ratio)
         x = int(x / self.width_ratio)
-        y = int(y / self.heigth_ratio)
-        self.attach(self.canvas, x, y)
+        print(self.height_ratio)
+        y = int(y / self.height_ratio)
+
+        print("Gui x: ", x)
+        print("Gui y: ", y)
+        # self.attach(self.canvas, x, y)
+        self.canvas.coords(self.id, x, y)
         return max_info
 
     def calculate(self, x=None, y=None):
         if x is None and y is None:
             x, y = self.canvas.coords(self.id)
-        # convert x and y for original
+            # convert x and y for original
 
-        print("GUI x: ", x)
-        print("GUI y: ", y)
+            x = int(x * self.width_ratio)
+            y = int(y * self.height_ratio)
 
-        x = int(x * self.width_ratio)
-        y = int(y * self.height_ratio)
+        w = 97
+        h = 55
 
-        print("New x: ", x)
-        print("New y: ", y)
-        w = 96
-        h = 54
-
-        print(self.img.shape)
+        print("Coordinates: ", (x, y))
+        total_pixels = w*h
+        # print("Total pixels: ", total_pixels)
 
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
-        print(crop_img.shape)
+
+        print("Box shape: ", crop_img.shape)
 
         # summing the total volume of box by grabbing each mapping
         vol = 0
@@ -381,11 +387,6 @@ class ImageCanvas:
         lane = Lane("Lane" + str(number))
         lane.attach(self.canvas, self.max_width / 2, 40)
         self.lanes.append(lane)
-
-        # self.lanes.append(lane)
-        # pass
-
-        # add column on table
 
     def remove_lane(self, source):
         # for lane in self.lanes:
