@@ -65,11 +65,26 @@ class App:
                     self.img_path = img_path
                     self.img = img
                     self.mappings = {}
-                    path_map = "./16bit_calibration.dat"
-                    with open(path_map, "r") as map_f:
-                        for line in map_f:
-                            intensity, volume = line.rstrip().split(",")
-                            self.mappings[intensity] = float(volume)
+
+                    with open(file_path, encoding="utf8", errors='ignore') as f:
+                        for line in f:
+                            l = line.lstrip().rstrip()
+                            if l[:6] == '<table':
+                                find_c = l.find('>')
+                                l = l[find_c + 1:-8]
+                                nums = l.split()
+                                i = 1
+                                for num in nums:
+                                    self.mappings[str(i)] = float(num)
+                                    i += 1
+                            if l[:17] == '<scan_resolution>':
+                                l = l[17:-18]
+                                self.scale = float(l)
+
+                    # with open(path_map, "r") as map_f:
+                    #     for line in map_f:
+                    #         intensity, volume = line.rstrip().split(",")
+                    #         self.mappings[intensity] = float(volume)
 
                     self.setup()
 
@@ -117,11 +132,6 @@ class App:
         '''
         Action from menu to add a lane onto the ImageCanvas
         '''
-        # number = len(self.lanes) + 1
-        # lane = Lane("Lane" + str(number))
-        # lane.attach(self.image_canvas.canvas, self.screen_width / 2, 40)
-        # self.lanes.append(lane)
-
         self.image_canvas.add_lane()
 
     def optimize_lanes(self):
@@ -134,6 +144,14 @@ class App:
         '''
         Action from menu to export information into a table
         '''
+        # ask you made changes, do you want to overwrite?
+
+        f = filedialog.asksaveasfile(mode="w", defaultextension=".csv")
+        if f is None:
+            return
+
+        print(f)
+
         # self.lanes is None
         # throw error
         # else

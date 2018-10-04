@@ -123,18 +123,25 @@ class Lane:
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
             print(self.calculate(x, y))
+            self.label.delete(self.adj)
+
+            e = self.calculate(x, y)
+            adj = e[0]
+            self.adj = self.label.create_text(self.w/2, 3*self.h/4,
+                                              text=str(round(adj, 2)))
             return
         if self.canvas:
             self.detach()
         if not canvas:
             return
 
-        h = int((54 / 1293) * self.img_canvas.max_height)
-        print("Box height: ", h)
-        w = int((96 / 2273) * self.img_canvas.max_width)
-        print("Box width: ", w)
-        label = tkinter.Canvas(canvas, height=h, width=w, highlightthickness=1)
-        label.create_text(w/2, h/2, text=self.name)
+        self.h = int((54 / 1293) * self.img_canvas.max_height)
+        print("Box height: ", self.h)
+        self.w = int((96 / 2273) * self.img_canvas.max_width)
+        print("Box width: ", self.w)
+        label = tkinter.Canvas(canvas, height=self.h,
+                               width=self.w, highlightthickness=1)
+        label.create_text(self.w/2, self.h/4, text=self.name)
 
         # label = tkinter.Label(canvas, text=self.name,
         #                       borderwidth=1, relief="ridge", width=5, height=1)
@@ -142,7 +149,11 @@ class Lane:
         self.canvas = canvas
         self.label = label
         self.id = id
-        print(self.calculate(x, y))
+        e = self.calculate(x, y)
+        adj = e[0]
+        self.adj = self.label.create_text(
+            self.w/2, 3*self.h/4, text=str(round(adj, 2)))
+
         label.focus_set()
         label.bind("<ButtonPress>", self.press)
 
@@ -210,21 +221,30 @@ class Lane:
         self.detach()
 
     def optimize_lane(self):
+        print("------START--------")
         x, y = self.canvas.coords(self.id)
+        x = int(x)
+        y = int(y)
         # convert to original x and y
         max_adj = float("-inf")
         max_info = None
+
         for i in range(x-10, x+10):
             for j in range(y-10, y+10):
                 cur_calc = self.calculate(i, j)
                 cur_adj = cur_calc[0]
                 if max_adj < cur_adj:
                     max_info = cur_calc
+        print("------END--------")
         print(max_info)
+        x, y = max_info[3]
+        x = int(x / self.width_ratio)
+        y = int(y / self.heigth_ratio)
+        self.attach(self.canvas, x, y)
         return max_info
 
     def calculate(self, x=None, y=None):
-        if x == None and y == None:
+        if x is None and y is None:
             x, y = self.canvas.coords(self.id)
         # convert x and y for original
 
@@ -378,8 +398,8 @@ class ImageCanvas:
         pass
 
     def optimize_lanes(self):
-        # for lane in self.lanes:
-        #     lane.optimize_lane()
+        for lane in self.lanes:
+            lane.optimize_lane()
         # update table
         pass
 
