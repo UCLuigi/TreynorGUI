@@ -23,7 +23,7 @@ class App:
         # File menu
         filemenu = Menu(menubar, tearoff=0)
         filemenu.add_command(label="Open file", command=self.look_up_image)
-        filemenu.add_command(label="Optomize Adj Vol",
+        filemenu.add_command(label="Optimize Adj Vol",
                              command=self.optimize_lanes)
         filemenu.add_command(label="Export table", command=self.export)
         filemenu.add_separator()
@@ -60,7 +60,6 @@ class App:
             return
 
         img = cv2.imread(img_path, -1)
-
         # Check if image is 16 bits
         if img.dtype != 'uint16':
             messagebox.showerror(
@@ -123,6 +122,7 @@ class App:
         '''
         Action from menu to add a lane onto the ImageCanvas
         '''
+        # Check if image was uploaded
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
@@ -132,12 +132,14 @@ class App:
         '''
         Action from menu to optimize volume of all lanes
         '''
+        # Check if image was uploaded
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
+        # Check if there are lanes
         if len(self.image_canvas.lanes) == 0:
             messagebox.showerror('Error',
-                                 'There are no lanes to optomize, you need to add lanes first')
+                                 'There are no lanes to optimize, you need to add lanes first')
             return
         self.image_canvas.optimize_lanes()
 
@@ -146,9 +148,12 @@ class App:
         Action from menu to export information into a table
         '''
         # ask you made changes, do you want to overwrite?
+
+        # Check if image was uploaded
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
+        # Check if there are lanes
         if len(self.image_canvas.lanes) == 0:
             messagebox.showerror('Error',
                                  'There are no lanes to export, you need to add lanes first')
@@ -159,11 +164,41 @@ class App:
             return
 
         print(f)
+        columns = [ 'No.',
+                    'Label',
+                    'Type',
+                    'Volume (OD)',
+                    'Adj. Vol. (OD)',
+                    'Mean Bkgd. (OD)',
+                    'Abs. Quant.',
+                    'Rel. Quant.',
+                    '# of Pixels',
+                    'Min. Value (OD)',
+                    'Max. Value (OD)',
+                    'Mean Value (OD)',
+                    'Std. Dev.',
+                    'Area (mm2)',
+                    'X (pixels)',
+                    'Y (pixels)',
+                    'width (pixels)',
+                    'height (pixels)'
+                ]
+        column_str = ",".join(columns)
+        # w = 97
+        # h = 55
+        # t = "Unknown"
+        # a_quant = r_quant = "N/A"
+        # total_pixels = w*h
+        # area = ((self.scale/1000)**2) * (w*h)
 
-        # self.lanes is None
-        # throw error
-        # else
-        # start creating table
+        # for lane in self.image_canvas.lanes:
+        #     label = lane.name
+        #     num = label[4:]
+        #     adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = lane.info
+        #     x,y = x_y
+        #     row = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
+        #     row_str = ",".join(row)
+
 
         # output_file = self.img_path.split(".")[0] + ".csv"
         # with open(output_file, "w") as f_write:

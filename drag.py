@@ -223,16 +223,16 @@ class Lane:
         x, y = self.canvas.coords(self.id)
         x = int(x * self.width_ratio)
         y = int(y * self.height_ratio)
-        # convert to original x and y
+
         max_adj = float("-inf")
         max_info = None
 
+        # Find the max adjusted volume
         for i in range(x-10, x+10):
             for j in range(y-10, y+10):
                 cur_calc = self.calculate(i, j)
                 cur_adj = cur_calc[0]
                 if max_adj < cur_adj:
-                    print("Adj changed... ", cur_calc)
                     max_info = cur_calc
                     max_adj = cur_adj
         print("------END--------")
@@ -242,37 +242,53 @@ class Lane:
         x = int(x / self.width_ratio)
         y = int(y / self.height_ratio)
 
-        # self.attach(self.canvas, x, y)
         self.canvas.coords(self.id, x, y)
+        self.label.delete(self.adj)
+
+        #self.adj_vol, self.mean_b, self.vol, self.coor, self.min_vol, self.max_vol, self.avg_vol, self.sd = max_info
+        self.info = max_info
+        adj_vol = max_info[0]
+        self.adj = self.label.create_text(self.w/2, 3*self.h/4,
+                                          text=str(round(adj_vol, 2)))
         return max_info
 
     def calculate(self, x=None, y=None):
         if x is None and y is None:
             x, y = self.canvas.coords(self.id)
             # convert x and y for original
-
             x = int(x * self.width_ratio)
             y = int(y * self.height_ratio)
 
         w = 97
         h = 55
 
-        print("Coordinates: ", (x, y))
-        total_pixels = w*h
-        # print("Total pixels: ", total_pixels)
-
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
 
         # summing the total volume of box by grabbing each mapping
         vol = 0
+        min_vol = float("inf")
+        max_vol = float("-inf")
         for i in range(1, h+1):
             for j in range(1, w+1):
                 m = self.mappings[str(crop_img[i, j])]
+                if m < min_vol:
+                    min_vol = m
+                if m > max_vol:
+                    max_vol = m
                 vol += m
-        print("Volume OD: ", vol)
 
-        # Get mean background of bigger box
+        # Calculating average volume and standard deviation
+        avg_vol = vol / (w*h)
+        sd = 0
+        for i in range(1, h+1):
+            for j in range(1, w+1):
+                m = self.mappings[str(crop_img[i, j])]
+                sd += (avg_vol - m)**2
+        sd /= w*h
+        sd = sd ** (1/2)
+
+        # Get mean background
         mean_b = 0
         for j in range(0, h+2):
             mean_b += self.mappings[str(crop_img[j, 0])] + \
@@ -280,14 +296,15 @@ class Lane:
         for i in range(1, w-1):
             mean_b += self.mappings[str(crop_img[0, i])] + \
                 self.mappings[str(crop_img[h+1, i])]
-
         mean_b /= ((w+2) * 2) + (h * 2)
-        print("Mean Bkgd: ", mean_b)
 
+        # Calculate adjusted volume
         adj_vol = vol - (self.total_pixels * mean_b)
-        print("Adj Vol: ", adj_vol)
 
-        return adj_vol, mean_b, vol, (x, y)
+        info = (adj_vol, mean_b, vol, (x, y), min_vol, max_vol, avg_vol, sd)
+        self.info = info
+        # self.adj_vol, self.mean_b, self.vol, self.coor, self.min_vol, self.max_vol, self.avg_vol, self.sd = info
+        return info
 
 
 class ImageCanvas:
@@ -381,12 +398,12 @@ class ImageCanvas:
         self.lanes.append(lane)
 
     def remove_lane(self, source):
-        # for lane in self.lanes:
-        #     if lane.id == source.id:
-        #         lanes.remove(lane)
-        # source.detach()
 
-        # remove column on table
+        # for lane in self.lanes:
+        #     if lane.name == source.name:
+        #         self.lanes.remove(lane)
+        #         source.delete()
+        # source.detach()
 
         pass
 
