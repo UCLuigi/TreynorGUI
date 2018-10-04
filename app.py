@@ -11,13 +11,11 @@ class App:
         self.root = root
         self.root.title("Treynor")
         self.screen_width = root.winfo_screenwidth()
-        print("Screen width: ", self.screen_width)
         self.screen_height = root.winfo_screenheight()
-        print("Screen heigth: ", self.screen_height)
+        self.image_canvas = None
 
-        self.image_height = int(self.screen_height * (8/10))
+        #self.image_height = int(self.screen_height * (8/10))
 
-        print("Image height: ", self.image_height)
         self.root.geometry(str(self.screen_width)+"x"+str(self.screen_height))
         self.root.configure(background='grey')
         menubar = Menu(root)
@@ -44,43 +42,52 @@ class App:
         Function that looks for a tif image given an scn file.
         Error checks if it doesn't find image and if it's not 16-bit.
         '''
+        # if self.image_canvas is not None:
+
         file_path = filedialog.askopenfilename(filetypes=(("Scn files", "*.scn"),
                                                           ("All Files", "*.*")),
                                                title="Choose an scn file."
                                                )
-        if file_path != '':
-            img_path = file_path[:-3] + "tif"
-            # Check if image exists
-            if not os.path.exists(img_path):
-                messagebox.showerror(
-                    "Error", "You should name your scn file and your tif image the same")
-            else:
-                img = cv2.imread(img_path, -1)
-                # Check if image is 16 bits
-                if img.dtype != 'uint16':
-                    messagebox.showerror(
-                        "Error", "You need to export 16-bit image...")
-                else:
-                    self.scn_file = file_path
-                    self.img_path = img_path
-                    self.img = img
-                    self.mappings = {}
-                    # Parse scn file
-                    with open(file_path, encoding="utf8", errors='ignore') as f:
-                        for line in f:
-                            l = line.lstrip().rstrip()
-                            if l[:6] == '<table':
-                                find_c = l.find('>')
-                                l = l[find_c + 1:-8]
-                                nums = l.split()
-                                i = 1
-                                for num in nums:
-                                    self.mappings[str(i)] = float(num)
-                                    i += 1
-                            if l[:17] == '<scan_resolution>':
-                                l = l[17:-18]
-                                self.scale = float(l)
-                    self.setup()
+        # Check if pressed cancel
+        if file_path == '':
+            return
+
+        img_path = file_path[:-3] + "tif"
+        # Check if image exists
+        if not os.path.exists(img_path):
+            messagebox.showerror(
+                "Error", "You should name your scn file and your tif image the same")
+            return
+
+        img = cv2.imread(img_path, -1)
+
+        # Check if image is 16 bits
+        if img.dtype != 'uint16':
+            messagebox.showerror(
+                "Error", "You need to export 16-bit image...")
+            return
+
+        self.scn_file = file_path
+        self.img_path = img_path
+        self.img = img
+        self.mappings = {}
+
+        # Parse scn file
+        with open(file_path, encoding="utf8", errors='ignore') as f:
+            for line in f:
+                l = line.lstrip().rstrip()
+                if l[:6] == '<table':
+                    find_c = l.find('>')
+                    l = l[find_c + 1:-8]
+                    nums = l.split()
+                    i = 1
+                    for num in nums:
+                        self.mappings[str(i)] = float(num)
+                        i += 1
+                if l[:17] == '<scan_resolution>':
+                    l = l[17:-18]
+                    self.scale = float(l)
+        self.setup()
 
     def setup(self):
         '''
@@ -89,7 +96,7 @@ class App:
         '''
         self.topframe = Frame(
             self.root, width=self.screen_width, height=self.screen_height)
-        self.topframe.pack()
+        self.topframe.pack(fill=BOTH)
         # self.bottomframe = Frame(self.root, width=self.screen_width)
         # self.bottomframe.pack(fill=BOTH, side=BOTTOM)
         self.image_canvas = ImageCanvas(
@@ -116,12 +123,22 @@ class App:
         '''
         Action from menu to add a lane onto the ImageCanvas
         '''
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
         self.image_canvas.add_lane()
 
     def optimize_lanes(self):
         '''
         Action from menu to optimize volume of all lanes
         '''
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
+        if len(self.image_canvas.lanes) == 0:
+            messagebox.showerror('Error',
+                                 'There are no lanes to optomize, you need to add lanes first')
+            return
         self.image_canvas.optimize_lanes()
 
     def export(self):
@@ -129,6 +146,13 @@ class App:
         Action from menu to export information into a table
         '''
         # ask you made changes, do you want to overwrite?
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
+        if len(self.image_canvas.lanes) == 0:
+            messagebox.showerror('Error',
+                                 'There are no lanes to export, you need to add lanes first')
+            return
 
         f = filedialog.asksaveasfile(mode="w", defaultextension=".csv")
         if f is None:
