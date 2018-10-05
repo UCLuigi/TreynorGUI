@@ -14,8 +14,6 @@ class App:
         self.screen_height = root.winfo_screenheight()
         self.image_canvas = None
 
-        # self.image_height = int(self.screen_height * (8/10))
-
         self.root.geometry(str(self.screen_width)+"x"+str(self.screen_height))
         self.root.configure(background='grey')
         menubar = Menu(root)
@@ -74,6 +72,7 @@ class App:
             messagebox.showerror(
                 "Error", "You need to export 16-bit image...")
             return
+
         self.scn_file = file_path
         self.img_path = img_path
         self.img = img
@@ -104,27 +103,8 @@ class App:
         self.topframe = Frame(
             self.root, width=self.screen_width, height=self.screen_height)
         self.topframe.pack(fill=BOTH)
-        # self.bottomframe = Frame(self.root, width=self.screen_width)
-        # self.bottomframe.pack(fill=BOTH, side=BOTTOM)
         self.image_canvas = ImageCanvas(
             self.topframe, self.img_path, self.mappings, self.screen_width, self.screen_height)
-
-        # width = 6
-        # table = Label(self.bottomframe, text="Lane",
-        #               relief="solid", width=width)
-        # table.grid(row=0, column=0)
-        # for i in range(20):
-        #     lane = Label(self.bottomframe, text=str(
-        #         i+1), relief="solid", width=width)
-        #     lane.grid(row=0, column=i+1)
-
-        # volume = Label(self.bottomframe, text="Adj Vol",
-        #                relief="solid", width=width)
-        # volume.grid(row=1, column=0)
-        # for i in range(20):
-        #     lane = Label(self.bottomframe, text=str(0),
-        #                  relief="solid", width=width)
-        #     lane.grid(row=1, column=i+1)
 
     def create_lane(self):
         '''
@@ -166,7 +146,9 @@ class App:
             return
         # Check if pressed optimized and manually moved
         if self.image_canvas.clicked_opt == True and self.image_canvas.manual_move == True:
-            answer = messagebox.askokcancel('Export', 'You have manually moved lanes since optimizing lanes. Are you sure you want to export anyways?')
+            answer = messagebox.askokcancel('Export', 
+                                            'You have manually moved lanes since optimizing lanes. \
+                                             Are you sure you want to export anyways?')
             if answer == False:
                 return
         
@@ -175,12 +157,6 @@ class App:
         if f is None:
             return
 
-        # path = filedialog.asksaveasfilename(title = "Select file",filetypes = (("csv files","*.csv"),("all files","*.*")))
-        # print(path)
-        # if path == '':
-        #     return
-
-        # print(f)
         columns = [ 'No.',
                     'Label',
                     'Type',
@@ -210,12 +186,14 @@ class App:
         total_pixels = w*h
         area = ((self.scale/1000)**2) * (w*h)
 
+        # Loop through all lanes
         for lane in self.image_canvas.lanes:
             label = lane.name
             num = label[4:]
             adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = lane.info
             x,y = x_y
-            r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
+            r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,
+                    min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
             row = list(map(str, r))
             row_str = ",".join(row) + "\n"
             f.write(row_str)
