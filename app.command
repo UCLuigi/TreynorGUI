@@ -82,6 +82,7 @@ class App:
 
         # Parse scn file
         with open(file_path, encoding="utf8", errors='ignore') as f:
+            self.mappings[0] = float(0)
             for line in f:
                 l = line.lstrip().rstrip()
                 if l[:6] == '<table':

@@ -264,13 +264,11 @@ class Lane:
 
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
-        # convert image to volume mappings
-        crop_img_v = np.vectorize(self.mappings.__getitem__)(crop_img)
 
-        min_vol = np.amin(crop_img_v[1:h+1, 1:w+1])
-        max_vol = np.amax(crop_img_v[1:h+1, 1:w+1])
-        vol = np.sum(crop_img_v[1:h+1, 1:w+1])
-        sd = np.std(crop_img_v[1:h+1, 1:w+1])
+        min_vol = np.amin(crop_img[1:h+1, 1:w+1])
+        max_vol = np.amax(crop_img[1:h+1, 1:w+1])
+        vol = np.sum(crop_img[1:h+1, 1:w+1])
+        sd = np.std(crop_img[1:h+1, 1:w+1])
 
         # Calculating average volume and standard deviation
         avg_vol = vol / (w*h)
@@ -278,11 +276,11 @@ class Lane:
         # Get mean background
         mean_b = 0
         for j in range(0, h+2):
-            mean_b += self.mappings[crop_img[j, 0]] + \
-                self.mappings[crop_img[j, w+1]]
+            mean_b += crop_img[j, 0] + \
+                crop_img[j, w+1]
         for i in range(1, w-1):
-            mean_b += self.mappings[crop_img[0, i]] + \
-                self.mappings[crop_img[h+1, i]]
+            mean_b += crop_img[0, i] + \
+                crop_img[h+1, i]
         mean_b /= ((w+2) * 2) + (h * 2)
 
         # Calculate adjusted volume
@@ -310,7 +308,7 @@ class ImageCanvas:
         Lane.width_ratio = self.width_ratio
         Lane.height_ratio = self.height_ratio
         Lane.mappings = self.map
-        Lane.img = self.img_info
+        Lane.img = np.vectorize(self.map.__getitem__)(self.img_info)
         Lane.img_canvas = self
 
         im = im.resize((i_width, i_height), Image.ANTIALIAS)
