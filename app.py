@@ -155,8 +155,6 @@ class App:
         '''
         Action from menu to export information into a table
         '''
-        # ask you made changes, do you want to overwrite?
-
         # Check if image was uploaded
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
@@ -166,12 +164,23 @@ class App:
             messagebox.showerror('Error',
                                  'There are no lanes to export, you need to add lanes first')
             return
-
+        # Check if pressed optimized and manually moved
+        if self.image_canvas.clicked_opt == True and self.image_canvas.manual_move == True:
+            answer = messagebox.askokcancel('Export', 'You have manually moved lanes since optimizing lanes. Are you sure you want to export anyways?')
+            if answer == False:
+                return
+        
+        # Save file with name
         f = filedialog.asksaveasfile(mode="w", defaultextension=".csv")
         if f is None:
             return
 
-        print(f)
+        # path = filedialog.asksaveasfilename(title = "Select file",filetypes = (("csv files","*.csv"),("all files","*.*")))
+        # print(path)
+        # if path == '':
+        #     return
+
+        # print(f)
         columns = [ 'No.',
                     'Label',
                     'Type',
@@ -191,29 +200,28 @@ class App:
                     'width (pixels)',
                     'height (pixels)'
                 ]
-        column_str = ",".join(columns)
-        # w = 97
-        # h = 55
-        # t = "Unknown"
-        # a_quant = r_quant = "N/A"
-        # total_pixels = w*h
-        # area = ((self.scale/1000)**2) * (w*h)
+        column_str = ",".join(columns) + "\n"
+        f.write(column_str)
 
-        # for lane in self.image_canvas.lanes:
-        #     label = lane.name
-        #     num = label[4:]
-        #     adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = lane.info
-        #     x,y = x_y
-        #     r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
-        #     row = list(map(str, r))
-        #     row_str = ",".join(row) + "\n"
+        w = 97
+        h = 55
+        t = "Unknown"
+        a_quant = r_quant = "N/A"
+        total_pixels = w*h
+        area = ((self.scale/1000)**2) * (w*h)
 
+        for lane in self.image_canvas.lanes:
+            label = lane.name
+            num = label[4:]
+            adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = lane.info
+            x,y = x_y
+            r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
+            row = list(map(str, r))
+            row_str = ",".join(row) + "\n"
+            f.write(row_str)
 
-        # output_file = self.img_path.split(".")[0] + ".csv"
-        # with open(output_file, "w") as f_write:
-        #     for lane in self.image_canvas.lanes:
-
-        pass
+        f.close()
+        messagebox.showinfo('Success', 'Table information exported')
 
 
 if __name__ == '__main__':

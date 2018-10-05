@@ -142,8 +142,6 @@ class Lane:
                                width=self.w, highlightthickness=1)
         self.label_name = label.create_text(self.w/2, self.h/4, text=self.name)
 
-        # label = tkinter.Label(canvas, text=self.name,
-        #                       borderwidth=1, relief="ridge", width=5, height=1)
         id = canvas.create_window(x, y, window=label, anchor="nw")
         self.canvas = canvas
         self.label = label
@@ -168,8 +166,6 @@ class Lane:
 
     def press(self, event):
         self.img_canvas.selected = self
-        print(self.img_canvas.selected.name)
-
         self.label.focus_set()
         self.label.bind('<Left>', self.left)
         self.label.bind('<Right>', self.right)
@@ -204,25 +200,28 @@ class Lane:
         pass
 
     def left(self, event):
+        if self.img_canvas.clicked_opt == True:
+            self.img_canvas.manual_move = True
         x, y = self.canvas.coords(self.id)
         self.attach(self.canvas, x-1, y)
 
     def right(self, event):
+        if self.img_canvas.clicked_opt == True:
+            self.img_canvas.manual_move = True
         x, y = self.canvas.coords(self.id)
         self.attach(self.canvas, x+1, y)
 
     def up(self, event):
+        if self.img_canvas.clicked_opt == True:
+            self.img_canvas.manual_move = True
         x, y = self.canvas.coords(self.id)
         self.attach(self.canvas, x, y-1)
 
     def down(self, event):
+        if self.img_canvas.clicked_opt == True:
+            self.img_canvas.manual_move = True
         x, y = self.canvas.coords(self.id)
         self.attach(self.canvas, x, y+1)
-
-    # def delete(self, event):
-    #     print("hereee")
-
-        # self.detach()
 
     def optimize_lane(self):
         x, y = self.canvas.coords(self.id)
@@ -240,8 +239,7 @@ class Lane:
                 if max_adj < cur_adj:
                     max_info = cur_calc
                     max_adj = cur_adj
-        print("------END--------")
-        print(max_info)
+
         x, y = max_info[3]
 
         x = int(x / self.width_ratio)
@@ -250,7 +248,6 @@ class Lane:
         self.canvas.coords(self.id, x, y)
         self.label.delete(self.adj)
 
-        #self.adj_vol, self.mean_b, self.vol, self.coor, self.min_vol, self.max_vol, self.avg_vol, self.sd = max_info
         self.info = max_info
         adj_vol = max_info[0]
         self.adj = self.label.create_text(self.w/2, 3*self.h/4,
@@ -308,7 +305,6 @@ class Lane:
 
         info = (adj_vol, mean_b, vol, (x, y), min_vol, max_vol, avg_vol, sd)
         self.info = info
-        # self.adj_vol, self.mean_b, self.vol, self.coor, self.min_vol, self.max_vol, self.avg_vol, self.sd = info
         return info
 
 
@@ -340,6 +336,7 @@ class ImageCanvas:
         self.canvas.pack(fill=BOTH)
         self.canvas.dnd_accept = self.dnd_accept
         self.clicked_opt = False
+        self.manual_move = False
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
         if lower_bound is not None and not(0 <= lower_bound < 2**16):
@@ -385,6 +382,8 @@ class ImageCanvas:
         self.dndid = None
 
     def dnd_commit(self, source, event):
+        if self.clicked_opt == True:
+            self.manual_move = True
         self.dnd_leave(source, event)
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
@@ -394,8 +393,6 @@ class ImageCanvas:
         self.selected.label.bind('<Right>', source.right)
         self.selected.label.bind('<Up>', source.up)
         self.selected.label.bind('<Down>', source.down)
-        # self.selected.bind('<BackSpace>', source.delete)
-        # self.selected.label.bind('<BackSpace>', self.remove_lane)
 
     def add_lane(self):
         number = len(self.lanes) + 1
@@ -422,5 +419,6 @@ class ImageCanvas:
 
     def optimize_lanes(self):
         self.clicked_opt = True
+        self.manual_move = False
         for lane in self.lanes:
             lane.optimize_lane()
