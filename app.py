@@ -88,7 +88,7 @@ class App:
                     nums = l.split()
                     i = 1
                     for num in nums:
-                        self.mappings[str(i)] = float(num)
+                        self.mappings[i] = float(num)
                         i += 1
                 if l[:17] == '<scan_resolution>':
                     l = l[17:-18]

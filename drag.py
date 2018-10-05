@@ -266,38 +266,27 @@ class Lane:
 
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
+        # convert image to volume mappings
+        crop_img_v = np.vectorize(self.mappings.__getitem__)(crop_img)
 
-        # summing the total volume of box by grabbing each mapping
-        vol = 0
-        min_vol = float("inf")
-        max_vol = float("-inf")
-        for i in range(1, h+1):
-            for j in range(1, w+1):
-                m = self.mappings[str(crop_img[i, j])]
-                if m < min_vol:
-                    min_vol = m
-                if m > max_vol:
-                    max_vol = m
-                vol += m
+        min_vol = np.amin(crop_img_v[1:h+1, 1:w+1])
+        max_vol = np.amax(crop_img_v[1:h+1, 1:w+1])
+        vol = np.sum(crop_img_v[1:h+1, 1:w+1])
+        sd = np.std(crop_img_v[1:h+1, 1:w+1])
 
         # Calculating average volume and standard deviation
         avg_vol = vol / (w*h)
-        sd = 0
-        for i in range(1, h+1):
-            for j in range(1, w+1):
-                m = self.mappings[str(crop_img[i, j])]
-                sd += (avg_vol - m)**2
-        sd /= w*h
-        sd = sd ** (1/2)
+
+        # new_mean_b = crop_img_v[] + crop_img_v[] + crop_img_v[] + crop_img_v[]
 
         # Get mean background
         mean_b = 0
         for j in range(0, h+2):
-            mean_b += self.mappings[str(crop_img[j, 0])] + \
-                self.mappings[str(crop_img[j, w+1])]
+            mean_b += self.mappings[crop_img[j, 0]] + \
+                self.mappings[crop_img[j, w+1]]
         for i in range(1, w-1):
-            mean_b += self.mappings[str(crop_img[0, i])] + \
-                self.mappings[str(crop_img[h+1, i])]
+            mean_b += self.mappings[crop_img[0, i]] + \
+                self.mappings[crop_img[h+1, i]]
         mean_b /= ((w+2) * 2) + (h * 2)
 
         # Calculate adjusted volume
