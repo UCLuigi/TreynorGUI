@@ -196,8 +196,9 @@ class App:
         #     num = label[4:]
         #     adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = lane.info
         #     x,y = x_y
-        #     row = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
-        #     row_str = ",".join(row)
+        #     r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
+        #     row = list(map(str, r))
+        #     row_str = ",".join(row) + "\n"
 
 
         # output_file = self.img_path.split(".")[0] + ".csv"

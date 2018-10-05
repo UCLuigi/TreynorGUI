@@ -140,7 +140,7 @@ class Lane:
 
         label = tkinter.Canvas(canvas, height=self.h,
                                width=self.w, highlightthickness=1)
-        label.create_text(self.w/2, self.h/4, text=self.name)
+        self.label_name = label.create_text(self.w/2, self.h/4, text=self.name)
 
         # label = tkinter.Label(canvas, text=self.name,
         #                       borderwidth=1, relief="ridge", width=5, height=1)
@@ -167,12 +167,15 @@ class Lane:
         label.destroy()
 
     def press(self, event):
+        self.img_canvas.selected = self
+        print(self.img_canvas.selected.name)
+
         self.label.focus_set()
         self.label.bind('<Left>', self.left)
         self.label.bind('<Right>', self.right)
         self.label.bind('<Up>', self.up)
         self.label.bind('<Down>', self.down)
-        #self.label.bind('<BackSpace>', self.img_canvas.remove_lane)
+        self.label.bind('<BackSpace>', self.img_canvas.remove_lane)
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -216,8 +219,10 @@ class Lane:
         x, y = self.canvas.coords(self.id)
         self.attach(self.canvas, x, y+1)
 
-    def delete(self, event):
-        self.detach()
+    # def delete(self, event):
+    #     print("hereee")
+
+        # self.detach()
 
     def optimize_lane(self):
         x, y = self.canvas.coords(self.id)
@@ -382,14 +387,14 @@ class ImageCanvas:
         self.dnd_leave(source, event)
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
-        self.selected = source.label
-        self.selected.focus_set()
-        self.selected.bind('<Left>', source.left)
-        self.selected.bind('<Right>', source.right)
-        self.selected.bind('<Up>', source.up)
-        self.selected.bind('<Down>', source.down)
+        self.selected = source
+        self.selected.label.focus_set()
+        self.selected.label.bind('<Left>', source.left)
+        self.selected.label.bind('<Right>', source.right)
+        self.selected.label.bind('<Up>', source.up)
+        self.selected.label.bind('<Down>', source.down)
         # self.selected.bind('<BackSpace>', source.delete)
-        # self.selected.bind('<BackSpace>', self.remove_lane)
+        # self.selected.label.bind('<BackSpace>', self.remove_lane)
 
     def add_lane(self):
         number = len(self.lanes) + 1
@@ -397,15 +402,22 @@ class ImageCanvas:
         lane.attach(self.canvas, self.max_width / 2, 40)
         self.lanes.append(lane)
 
-    def remove_lane(self, source):
-
-        # for lane in self.lanes:
-        #     if lane.name == source.name:
-        #         self.lanes.remove(lane)
-        #         source.delete()
-        # source.detach()
-
-        pass
+    def remove_lane(self, event):
+        source = self.selected
+        self.selected = None
+        for lane in self.lanes:
+            if lane.name == source.name:
+                self.lanes.remove(lane)
+                source.detach()
+                break
+        i = 1
+        for lane in self.lanes:
+            lane.name = "Lane"+str(i)
+            lane.label.delete(lane.label_name)
+            lane.label_name = lane.label.create_text(
+                lane.w/2, lane.h/4, text=lane.name)
+            i += 1
+        source.detach()
 
     def optimize_lanes(self):
         for lane in self.lanes:
