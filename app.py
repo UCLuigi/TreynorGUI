@@ -147,8 +147,7 @@ class App:
         # Check if pressed optimized and manually moved
         if self.image_canvas.clicked_opt == True and self.image_canvas.manual_move == True:
             answer = messagebox.askokcancel('Export', 
-                                            'You have manually moved lanes since optimizing lanes. \
-                                             Are you sure you want to export anyways?')
+                                            'You have manually moved lanes since optimizing lanes. Are you sure you want to export anyways?')
             if answer == False:
                 return
         

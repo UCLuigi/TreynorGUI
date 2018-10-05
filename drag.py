@@ -321,7 +321,6 @@ class ImageCanvas:
         im = Image.fromarray(i, mode="L")
         self.width_ratio = self.img_info.shape[1] / i_width
         self.height_ratio = self.img_info.shape[0] / i_height
-        self.lanes = []
 
         Lane.width_ratio = self.width_ratio
         Lane.height_ratio = self.height_ratio
@@ -332,8 +331,16 @@ class ImageCanvas:
         im = im.resize((i_width, i_height), Image.ANTIALIAS)
         self.img_label = ImageTk.PhotoImage(im)
         self.canvas.create_image(0, 0, image=self.img_label, anchor=NW)
-
         self.canvas.pack(fill=BOTH)
+
+        self.lanes = []
+        x = 20
+        for i in range(20):
+            lane = Lane("Lane"+str(i+1))
+            lane.attach(self.canvas, x, self.max_height * (3/10))
+            self.lanes.append(lane)
+            x += lane.w + 5
+
         self.canvas.dnd_accept = self.dnd_accept
         self.clicked_opt = False
         self.manual_move = False
