@@ -1,8 +1,9 @@
 from tkinter import *
-import tkinter
+import tkinter as tk
 import numpy as np
 from PIL import ImageTk, Image
 import cv2
+from tkinter.ttk import Progressbar
 
 # The factory function
 
@@ -136,8 +137,8 @@ class Lane:
         self.h = int((55 / 1293) * self.img_canvas.max_height)
         self.w = int((97 / 2273) * self.img_canvas.max_width)
 
-        label = tkinter.Canvas(canvas, height=self.h,
-                               width=self.w, highlightthickness=1)
+        label = tk.Canvas(canvas, height=self.h,
+                          width=self.w, highlightthickness=1)
         self.label_name = label.create_text(self.w/2, self.h/4, text=self.name)
 
         id = canvas.create_window(x, y, window=label, anchor="nw")
@@ -163,7 +164,10 @@ class Lane:
         label.destroy()
 
     def press(self, event):
+        if self.img_canvas.selected is not None:
+            self.img_canvas.selected.label.config(background="white")
         self.img_canvas.selected = self
+        self.img_canvas.selected.label.config(background="red")
         self.label.focus_set()
         self.label.bind('<Left>', self.left)
         self.label.bind('<Right>', self.right)
@@ -294,7 +298,7 @@ class Lane:
 class ImageCanvas:
 
     def __init__(self, root, image_path, mappings, i_width, i_height):
-        self.canvas = tkinter.Canvas(root, width=i_width, height=i_height)
+        self.canvas = tk.Canvas(root, width=i_width, height=i_height)
         self.max_width = i_width
         self.max_height = i_height
         self.img_info = cv2.imread(image_path, -1)
@@ -327,6 +331,7 @@ class ImageCanvas:
         self.canvas.dnd_accept = self.dnd_accept
         self.clicked_opt = False
         self.manual_move = False
+        self.selected = None
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
         if lower_bound is not None and not(0 <= lower_bound < 2**16):
@@ -378,6 +383,7 @@ class ImageCanvas:
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
         self.selected = source
+        # self.selected.label.config(highlightbackground="red")
         self.selected.label.focus_set()
         self.selected.label.bind('<Left>', source.left)
         self.selected.label.bind('<Right>', source.right)
@@ -410,5 +416,15 @@ class ImageCanvas:
     def optimize_lanes(self):
         self.clicked_opt = True
         self.manual_move = False
+        t = tk.Toplevel(self.canvas)
+        progressbar = Progressbar(t,
+                                  orient=HORIZONTAL, length=200, mode='determinate')
+        progressbar.pack(fill=BOTH)
+        progressbar['maximum'] = len(self.lanes) - 1
+        i = 0
         for lane in self.lanes:
             lane.optimize_lane()
+            i += 1
+            progressbar['value'] = i
+            progressbar.update()
+        t.destroy()

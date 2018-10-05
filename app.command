@@ -132,6 +132,7 @@ class App:
             messagebox.showerror('Error',
                                  'There are no lanes to optimize, you need to add lanes first')
             return
+        
         self.image_canvas.optimize_lanes()
 
     def export(self):
