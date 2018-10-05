@@ -417,6 +417,8 @@ class ImageCanvas:
         self.clicked_opt = True
         self.manual_move = False
         t = tk.Toplevel(self.canvas)
+        label = tk.Label(t,text="Optimizing")
+        label.pack(fill=BOTH)
         progressbar = Progressbar(t,
                                   orient=HORIZONTAL, length=200, mode='determinate')
         progressbar.pack(fill=BOTH)

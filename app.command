@@ -162,7 +162,8 @@ class App:
                 return
         
         # Save file with name
-        f = filedialog.asksaveasfile(mode="w", defaultextension=".csv")
+        name = self.scn_file[:-3].split("/")[-1]
+        f = filedialog.asksaveasfile(initialfile=name, mode="w", defaultextension=".csv")
         if f is None:
             return
 
