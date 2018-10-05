@@ -150,6 +150,12 @@ class App:
                                             'You have manually moved lanes since optimizing lanes. Are you sure you want to export anyways?')
             if answer == False:
                 return
+
+        if self.image_canvas.clicked_opt == False:
+            answer = messagebox.askokcancel('Export', 
+                                            'You have not optimized lanes. Are you sure you want to export anyways?')
+            if answer == False:
+                return
         
         # Save file with name
         f = filedialog.asksaveasfile(mode="w", defaultextension=".csv")

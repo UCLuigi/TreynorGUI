@@ -122,11 +122,9 @@ class Lane:
     def attach(self, canvas, x=10, y=10):
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
-
             self.label.delete(self.adj)
-
-            e = self.calculate()
-            adj = e[0]
+            info = self.calculate()
+            adj = info[0]
             self.adj = self.label.create_text(self.w/2, 3*self.h/4,
                                               text=str(round(adj, 2)))
             return
@@ -146,8 +144,8 @@ class Lane:
         self.canvas = canvas
         self.label = label
         self.id = id
-        e = self.calculate()
-        adj = e[0]
+        info = self.calculate()
+        adj = info[0]
         self.adj = self.label.create_text(
             self.w/2, 3*self.h/4, text=str(round(adj, 2)))
 
@@ -276,8 +274,6 @@ class Lane:
 
         # Calculating average volume and standard deviation
         avg_vol = vol / (w*h)
-
-        # new_mean_b = crop_img_v[] + crop_img_v[] + crop_img_v[] + crop_img_v[]
 
         # Get mean background
         mean_b = 0
