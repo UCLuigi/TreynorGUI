@@ -14,7 +14,7 @@ class App:
         self.screen_height = root.winfo_screenheight()
         self.image_canvas = None
 
-        #self.image_height = int(self.screen_height * (8/10))
+        # self.image_height = int(self.screen_height * (8/10))
 
         self.root.geometry(str(self.screen_width)+"x"+str(self.screen_height))
         self.root.configure(background='grey')
@@ -42,7 +42,16 @@ class App:
         Function that looks for a tif image given an scn file.
         Error checks if it doesn't find image and if it's not 16-bit.
         '''
-        # if self.image_canvas is not None:
+        # Check if image is uploaded already
+        if self.image_canvas is not None:
+            answer = messagebox.askokcancel(
+                'Override', "You have already uploaded an image, would you like to override it?")
+            if answer == True:
+                for lane in self.image_canvas.lanes:
+                    lane.detach()
+                self.topframe.destroy()
+            else:
+                return
 
         file_path = filedialog.askopenfilename(filetypes=(("Scn files", "*.scn"),
                                                           ("All Files", "*.*")),
@@ -65,7 +74,6 @@ class App:
             messagebox.showerror(
                 "Error", "You need to export 16-bit image...")
             return
-
         self.scn_file = file_path
         self.img_path = img_path
         self.img = img

@@ -339,6 +339,7 @@ class ImageCanvas:
 
         self.canvas.pack(fill=BOTH)
         self.canvas.dnd_accept = self.dnd_accept
+        self.clicked_opt = False
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
         if lower_bound is not None and not(0 <= lower_bound < 2**16):
@@ -420,5 +421,6 @@ class ImageCanvas:
         source.detach()
 
     def optimize_lanes(self):
+        self.clicked_opt = True
         for lane in self.lanes:
             lane.optimize_lane()
