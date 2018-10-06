@@ -107,7 +107,7 @@ class DndHandler:
 # ----------------------------------------------------------------------
 # The rest is here for testing and demonstration purposes only!
 
-class Lane:
+class Box:
 
     total_pixels = 55*97
     width_ratio = 1
@@ -173,7 +173,7 @@ class Lane:
         self.label.bind('<Right>', self.right)
         self.label.bind('<Up>', self.up)
         self.label.bind('<Down>', self.down)
-        self.label.bind('<BackSpace>', self.img_canvas.remove_lane)
+        self.label.bind('<BackSpace>', self.img_canvas.remove_box)
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -225,7 +225,7 @@ class Lane:
         x, y = self.canvas.coords(self.id)
         self.attach(self.canvas, x, y+1)
 
-    def optimize_lane(self):
+    def optimize_box(self):
         x, y = self.canvas.coords(self.id)
         x = int(x * self.width_ratio)
         y = int(y * self.height_ratio)
@@ -309,24 +309,24 @@ class ImageCanvas:
         self.width_ratio = self.img_info.shape[1] / i_width
         self.height_ratio = self.img_info.shape[0] / i_height
 
-        Lane.width_ratio = self.width_ratio
-        Lane.height_ratio = self.height_ratio
-        Lane.mappings = self.map
-        Lane.img = np.vectorize(self.map.__getitem__)(self.img_info)
-        Lane.img_canvas = self
+        Box.width_ratio = self.width_ratio
+        Box.height_ratio = self.height_ratio
+        Box.mappings = self.map
+        Box.img = np.vectorize(self.map.__getitem__)(self.img_info)
+        Box.img_canvas = self
 
         im = im.resize((i_width, i_height), Image.ANTIALIAS)
         self.img_label = ImageTk.PhotoImage(im)
         self.canvas.create_image(0, 0, image=self.img_label, anchor=NW)
         self.canvas.pack(fill=BOTH)
 
-        self.lanes = []
+        self.boxes = []
         x = 20
         for i in range(20):
-            lane = Lane("Lane"+str(i+1))
-            lane.attach(self.canvas, x, self.max_height * (3/10))
-            self.lanes.append(lane)
-            x += lane.w + 5
+            box = Box("Box"+str(i+1))
+            box.attach(self.canvas, x, self.max_height * (3/10))
+            self.boxes.append(box)
+            x += box.w + 5
 
         self.canvas.dnd_accept = self.dnd_accept
         self.clicked_opt = False
@@ -390,42 +390,42 @@ class ImageCanvas:
         self.selected.label.bind('<Up>', source.up)
         self.selected.label.bind('<Down>', source.down)
 
-    def add_lane(self):
-        number = len(self.lanes) + 1
-        lane = Lane("Lane" + str(number))
-        lane.attach(self.canvas, self.max_width / 2, 40)
-        self.lanes.append(lane)
+    def add_box(self):
+        number = len(self.boxes) + 1
+        box = Box("Box" + str(number))
+        box.attach(self.canvas, self.max_width / 2, 40)
+        self.boxes.append(box)
 
-    def remove_lane(self, event):
+    def remove_box(self, event):
         source = self.selected
         self.selected = None
-        for lane in self.lanes:
-            if lane.name == source.name:
-                self.lanes.remove(lane)
+        for box in self.boxes:
+            if box.name == source.name:
+                self.boxes.remove(box)
                 source.detach()
                 break
         i = 1
-        for lane in self.lanes:
-            lane.name = "Lane"+str(i)
-            lane.label.delete(lane.label_name)
-            lane.label_name = lane.label.create_text(
-                lane.w/2, lane.h/4, text=lane.name)
+        for box in self.boxes:
+            box.name = "Box"+str(i)
+            box.label.delete(box.label_name)
+            box.label_name = box.label.create_text(
+                box.w/2, box.h/4, text=box.name)
             i += 1
         source.detach()
 
-    def optimize_lanes(self):
+    def optimize_boxes(self):
         self.clicked_opt = True
         self.manual_move = False
         t = tk.Toplevel(self.canvas)
-        label = tk.Label(t,text="Optimizing")
+        label = tk.Label(t, text="Optimizing")
         label.pack(fill=BOTH)
         progressbar = Progressbar(t,
                                   orient=HORIZONTAL, length=200, mode='determinate')
         progressbar.pack(fill=BOTH)
-        progressbar['maximum'] = len(self.lanes) - 1
+        progressbar['maximum'] = len(self.boxes) - 1
         i = 0
-        for lane in self.lanes:
-            lane.optimize_lane()
+        for box in self.boxes:
+            box.optimize_box()
             i += 1
             progressbar['value'] = i
             progressbar.update()
