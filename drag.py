@@ -165,9 +165,9 @@ class Box:
 
     def press(self, event):
         if self.img_canvas.selected is not None:
-            self.img_canvas.selected.label.config(background="white")
+            self.img_canvas.selected.label.config(highlightbackground="black")
         self.img_canvas.selected = self
-        self.img_canvas.selected.label.config(background="red")
+        self.img_canvas.selected.label.config(highlightbackground="red")
         self.label.focus_set()
         self.label.bind('<Left>', self.left)
         self.label.bind('<Right>', self.right)
@@ -390,11 +390,14 @@ class ImageCanvas:
         self.selected.label.bind('<Up>', source.up)
         self.selected.label.bind('<Down>', source.down)
 
-    def add_box(self):
-        number = len(self.boxes) + 1
-        box = Box("Box" + str(number))
-        box.attach(self.canvas, self.max_width / 2, 40)
-        self.boxes.append(box)
+    def add_box(self, num=1):
+        x = 20
+        for i in range(num):
+            number = len(self.boxes) + 1
+            box = Box("Box" + str(number))
+            box.attach(self.canvas, x, 40)
+            x += box.w + 10
+            self.boxes.append(box)
 
     def remove_box(self, event):
         source = self.selected

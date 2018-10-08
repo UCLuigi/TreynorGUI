@@ -2,7 +2,7 @@
 
 from tkinter import *
 import os
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, simpledialog
 import cv2
 from drag import *
 
@@ -32,7 +32,9 @@ class App:
 
         # Edit menu
         editmenu = Menu(menubar, tearoff=0)
-        editmenu.add_command(label="Add box", command=self.create_lane)
+        editmenu.add_command(label="Add box", command=self.create_box)
+        editmenu.add_command(label="Add multiple boxes", command=self.create_multiple_boxes)
+        editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
         menubar.add_cascade(label="Edit", menu=editmenu)
 
         root.config(menu=menubar)
@@ -109,7 +111,7 @@ class App:
         self.image_canvas = ImageCanvas(
             self.topframe, self.img_path, self.mappings, self.screen_width, self.screen_height)
 
-    def create_lane(self):
+    def create_box(self):
         '''
         Action from menu to add a box onto the ImageCanvas
         '''
@@ -117,7 +119,21 @@ class App:
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
-        self.image_canvas.add_lane()
+        self.image_canvas.add_box()
+
+    def create_multiple_boxes(self):
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
+        number = simpledialog.askinteger("Input", "How many boxes?",
+                                 parent=self.root,
+                                 minvalue=1, maxvalue=20)
+        if number is not None:
+            self.image_canvas.add_box(number)
+    
+    def change_boxes_dimensions(self):
+
+        pass
 
     def optimize_boxes(self):
         '''
@@ -133,7 +149,18 @@ class App:
                                  'There are no boxes to optimize, you need to add boxes first')
             return
         
+        # boxes_copy = self.image_canvas.boxes.copy()
         self.image_canvas.optimize_boxes()
+
+        # for i in range(len(self.image_canvas.boxes)):
+        #     print()
+        #     print(boxes_copy[i].info)
+        #     print(self.image_canvas.boxes[i].info)
+        #     if boxes_copy[i].info != self.image_canvas.boxes[i].info:
+        #         messagebox.showinfo('Nope',' Nah bruhh.')
+        #         return
+        
+        # messagebox.showinfo('Converged','Optimization has converged. Click OK to continue.')
 
     def export(self):
         '''
@@ -162,7 +189,7 @@ class App:
                 return
         
         # Save file with name
-        name = self.scn_file[:-3].split("/")[-1]
+        name = self.scn_file[:-4].split("/")[-1]
         f = filedialog.asksaveasfile(initialfile=name, mode="w", defaultextension=".csv")
         if f is None:
             return
