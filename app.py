@@ -2,7 +2,7 @@
 
 from tkinter import *
 import os
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, simpledialog
 import cv2
 from drag import *
 
@@ -24,7 +24,7 @@ class App:
         filemenu = Menu(menubar, tearoff=0)
         filemenu.add_command(label="Open file", command=self.look_up_image)
         filemenu.add_command(label="Optimize Adj Vol",
-                             command=self.optimize_lanes)
+                             command=self.optimize_boxes)
         filemenu.add_command(label="Export table", command=self.export)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=root.quit)
@@ -32,7 +32,9 @@ class App:
 
         # Edit menu
         editmenu = Menu(menubar, tearoff=0)
-        editmenu.add_command(label="Add lane", command=self.create_lane)
+        editmenu.add_command(label="Add box", command=self.create_box)
+        editmenu.add_command(label="Add multiple boxes", command=self.create_multiple_boxes)
+        # editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
         menubar.add_cascade(label="Edit", menu=editmenu)
 
         root.config(menu=menubar)
@@ -47,8 +49,8 @@ class App:
             answer = messagebox.askokcancel(
                 'Override', "You have already uploaded an image, would you like to override it?")
             if answer == True:
-                for lane in self.image_canvas.lanes:
-                    lane.detach()
+                for box in self.image_canvas.boxes:
+                    box.detach()
                 self.topframe.destroy()
             else:
                 return
@@ -65,14 +67,14 @@ class App:
         # Check if image exists
         if not os.path.exists(img_path):
             messagebox.showerror(
-                "Error", "You should name your scn file and your tif image the same")
+                "Error", "Couldn't find .tif file with same name in same folder as selected .scn file.\n\n(1) Open selected .scn file in ImageLab.\n(2) Select File > Export > Export for Analysis.\n(3) Save 16-bit .tif file with same name and in same folder as selected .scn file.\n(4) Try again.")
             return
 
         img = cv2.imread(img_path, -1)
         # Check if image is 16 bits
         if img.dtype != 'uint16':
             messagebox.showerror(
-                "Error", "You need to export 16-bit image...")
+                "Error", "Matching .tif file was found with same name in same folder, but it is not 16-bit.\n\n(1) Delete matching .tif file with wrong resolution.\n(2) Open selected .scn file in ImageLab.\n(3) Select File > Export > Export for Analysis.\n(4) Save 16-bit .tif file with same name and in same folder as selected .scn file.\n(5) Try again.\n\nIf problem persists, re-boot ImageLab and try sequence again.")
             return
 
         self.scn_file = file_path
@@ -100,7 +102,7 @@ class App:
 
     def setup(self):
         '''
-        Sets up the window with the ImageCanvas and Lanes
+        Sets up the window with the ImageCanvas and boxes
         Creates a table
         '''
         self.topframe = Frame(
@@ -109,30 +111,44 @@ class App:
         self.image_canvas = ImageCanvas(
             self.topframe, self.img_path, self.mappings, self.screen_width, self.screen_height)
 
-    def create_lane(self):
+    def create_box(self):
         '''
-        Action from menu to add a lane onto the ImageCanvas
+        Action from menu to add a box onto the ImageCanvas
         '''
         # Check if image was uploaded
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
-        self.image_canvas.add_lane()
+        self.image_canvas.add_box()
 
-    def optimize_lanes(self):
+    def create_multiple_boxes(self):
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
+        number = simpledialog.askinteger("Input", "How many boxes?",
+                                 parent=self.root,
+                                 minvalue=1, maxvalue=20)
+        if number is not None:
+            self.image_canvas.add_box(number)
+    
+    # def change_boxes_dimensions(self):
+    #     pass
+
+    def optimize_boxes(self):
         '''
-        Action from menu to optimize volume of all lanes
+        Action from menu to optimize volume of all boxes
         '''
         # Check if image was uploaded
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
-        # Check if there are lanes
-        if len(self.image_canvas.lanes) == 0:
+        # Check if there are boxes
+        if len(self.image_canvas.boxes) == 0:
             messagebox.showerror('Error',
-                                 'There are no lanes to optimize, you need to add lanes first')
+                                 'There are no boxes to optimize, you need to add boxes first')
             return
-        self.image_canvas.optimize_lanes()
+
+        self.image_canvas.optimize_boxes()
 
     def export(self):
         '''
@@ -142,26 +158,27 @@ class App:
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
-        # Check if there are lanes
-        if len(self.image_canvas.lanes) == 0:
+        # Check if there are boxes
+        if len(self.image_canvas.boxes) == 0:
             messagebox.showerror('Error',
-                                 'There are no lanes to export, you need to add lanes first')
+                                 'There are no boxes to export, you need to add boxes first')
             return
         # Check if pressed optimized and manually moved
         if self.image_canvas.clicked_opt == True and self.image_canvas.manual_move == True:
             answer = messagebox.askokcancel('Export', 
-                                            'You have manually moved lanes since optimizing lanes. Are you sure you want to export anyways?')
+                                            'You have manually moved boxes since optimizing boxes. Are you sure you want to export anyways?')
             if answer == False:
                 return
 
         if self.image_canvas.clicked_opt == False:
             answer = messagebox.askokcancel('Export', 
-                                            'You have not optimized lanes. Are you sure you want to export anyways?')
+                                            'You have not optimized boxes. Are you sure you want to export anyways?')
             if answer == False:
                 return
         
         # Save file with name
-        f = filedialog.asksaveasfile(mode="w", defaultextension=".csv")
+        name = self.scn_file[:-4].split("/")[-1]
+        f = filedialog.asksaveasfile(initialfile=name, mode="w", defaultextension=".csv")
         if f is None:
             return
 
@@ -194,11 +211,11 @@ class App:
         total_pixels = w*h
         area = ((self.scale/1000)**2) * (w*h)
 
-        # Loop through all lanes
-        for lane in self.image_canvas.lanes:
-            label = lane.name
-            num = label[4:]
-            adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = lane.info
+        # Loop through all boxes
+        for box in self.image_canvas.boxes:
+            label = box.name
+            num = label[3:]
+            adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = box.info
             x,y = x_y
             r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,
                     min_vol,max_vol,avg_vol,sd,area,x,y,w,h]
