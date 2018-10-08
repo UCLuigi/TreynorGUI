@@ -34,7 +34,7 @@ class App:
         editmenu = Menu(menubar, tearoff=0)
         editmenu.add_command(label="Add box", command=self.create_box)
         editmenu.add_command(label="Add multiple boxes", command=self.create_multiple_boxes)
-        editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
+        # editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
         menubar.add_cascade(label="Edit", menu=editmenu)
 
         root.config(menu=menubar)
@@ -131,9 +131,8 @@ class App:
         if number is not None:
             self.image_canvas.add_box(number)
     
-    def change_boxes_dimensions(self):
-
-        pass
+    # def change_boxes_dimensions(self):
+    #     pass
 
     def optimize_boxes(self):
         '''
@@ -148,19 +147,8 @@ class App:
             messagebox.showerror('Error',
                                  'There are no boxes to optimize, you need to add boxes first')
             return
-        
-        # boxes_copy = self.image_canvas.boxes.copy()
-        self.image_canvas.optimize_boxes()
 
-        # for i in range(len(self.image_canvas.boxes)):
-        #     print()
-        #     print(boxes_copy[i].info)
-        #     print(self.image_canvas.boxes[i].info)
-        #     if boxes_copy[i].info != self.image_canvas.boxes[i].info:
-        #         messagebox.showinfo('Nope',' Nah bruhh.')
-        #         return
-        
-        # messagebox.showinfo('Converged','Optimization has converged. Click OK to continue.')
+        self.image_canvas.optimize_boxes()
 
     def export(self):
         '''
@@ -226,7 +214,7 @@ class App:
         # Loop through all boxes
         for box in self.image_canvas.boxes:
             label = box.name
-            num = label[4:]
+            num = label[3:]
             adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = box.info
             x,y = x_y
             r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,

@@ -4,6 +4,7 @@ import numpy as np
 from PIL import ImageTk, Image
 import cv2
 from tkinter.ttk import Progressbar
+from tkinter import messagebox
 
 # The factory function
 
@@ -138,7 +139,7 @@ class Box:
         self.w = int((97 / 2273) * self.img_canvas.max_width)
 
         label = tk.Canvas(canvas, height=self.h,
-                          width=self.w, highlightthickness=1)
+                          width=self.w, highlightthickness=1, highlightbackground="black")
         self.label_name = label.create_text(self.w/2, self.h/4, text=self.name)
 
         id = canvas.create_window(x, y, window=label, anchor="nw")
@@ -165,15 +166,16 @@ class Box:
 
     def press(self, event):
         if self.img_canvas.selected is not None:
-            self.img_canvas.selected.label.config(highlightbackground="black")
+            self.img_canvas.selected.label.config(background="white")
         self.img_canvas.selected = self
-        self.img_canvas.selected.label.config(highlightbackground="red")
+        self.img_canvas.selected.label.config(background="red")
         self.label.focus_set()
         self.label.bind('<Left>', self.left)
         self.label.bind('<Right>', self.right)
         self.label.bind('<Up>', self.up)
         self.label.bind('<Down>', self.down)
         self.label.bind('<BackSpace>', self.img_canvas.remove_box)
+
         if dnd_start(self, event):
             # where the pointer is relative to the label widget:
             self.x_off = event.x
@@ -332,6 +334,7 @@ class ImageCanvas:
         self.clicked_opt = False
         self.manual_move = False
         self.selected = None
+        self.top = None
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
         if lower_bound is not None and not(0 <= lower_bound < 2**16):
@@ -383,7 +386,6 @@ class ImageCanvas:
         x, y = source.where(self.canvas, event)
         source.attach(self.canvas, x, y)
         self.selected = source
-        # self.selected.label.config(highlightbackground="red")
         self.selected.label.focus_set()
         self.selected.label.bind('<Left>', source.left)
         self.selected.label.bind('<Right>', source.right)
@@ -417,6 +419,9 @@ class ImageCanvas:
         source.detach()
 
     def optimize_boxes(self):
+        if self.top is not None:
+            self.top.destroy()
+            self.top = None
         self.clicked_opt = True
         self.manual_move = False
         t = tk.Toplevel(self.canvas)
@@ -427,9 +432,31 @@ class ImageCanvas:
         progressbar.pack(fill=BOTH)
         progressbar['maximum'] = len(self.boxes) - 1
         i = 0
+        opt_bool = True
         for box in self.boxes:
+            old_info = box.info
             box.optimize_box()
+            new_info = box.info
             i += 1
             progressbar['value'] = i
             progressbar.update()
+            if old_info != new_info:
+                opt_bool = False
         t.destroy()
+        if opt_bool == True:
+            messagebox.showinfo(
+                'Converged', "Optimization has converged. Click OK to continue.")
+        else:
+            self.top = tk.Toplevel(self.canvas)
+            Label(self.top, text="Click \"Repeat Optimization\" to test for convergence. Click \"OK\" to leave boxes where they are.").pack()
+            r = Button(self.top, text="Repeat Optimization",
+                       command=self.optimize_boxes)
+            r.pack()
+            ok = Button(self.top, text="OK", command=self.ok, bg="blue")
+            ok.focus_set()
+            ok.bind('<Return>', self.ok)
+            ok.pack()
+
+    def ok(self, event=None):
+        self.top.destroy()
+        self.top = None
