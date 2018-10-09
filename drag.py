@@ -6,6 +6,7 @@ import cv2
 from tkinter.ttk import Progressbar
 from tkinter import messagebox
 
+
 # The factory function
 
 
@@ -121,35 +122,44 @@ class Box:
         self.name = name
         self.canvas = self.label = self.id = None
 
-    def attach(self, canvas, x=10, y=10):
+    def attach(self, canvas, x=10, y=10, box_height=55, box_width=97):
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
+            self.x = x
+            self.y = y
             self.label.delete(self.adj)
             info = self.calculate()
             adj = info[0]
             self.adj = self.label.create_text(self.w/2, 3*self.h/4,
-                                              text=str(round(adj, 2)))
+                                              text=str(round(adj, 2)), font=("Purisa", 8))
             return
         if self.canvas:
             self.detach()
         if not canvas:
             return
 
-        self.h = int((55 / 1293) * self.img_canvas.max_height)
-        self.w = int((97 / 2273) * self.img_canvas.max_width)
+        self.h = int((box_height / 1293) * self.img_canvas.max_height)
+        self.h_actual = box_height
+        self.w = int((box_width / 2273) * self.img_canvas.max_width)
+        self.w_actual = box_width
+
+        self.total_pixels = self.h_actual * self.w_actual
 
         label = tk.Canvas(canvas, height=self.h,
                           width=self.w, highlightthickness=1, highlightbackground="black")
-        self.label_name = label.create_text(self.w/2, self.h/4, text=self.name)
+        self.label_name = label.create_text(
+            self.w/2, self.h/4, text=self.name, font=("Purisa", 10))
 
         id = canvas.create_window(x, y, window=label, anchor="nw")
+        self.x = x
+        self.y = y
         self.canvas = canvas
         self.label = label
         self.id = id
         info = self.calculate()
         adj = info[0]
         self.adj = self.label.create_text(
-            self.w/2, 3*self.h/4, text=str(round(adj, 2)))
+            self.w/2, 3*self.h/4, text=str(round(adj, 2)), font=("Purisa", 8))
 
         label.focus_set()
         label.bind("<ButtonPress>", self.press)
@@ -249,13 +259,16 @@ class Box:
         x = int(x / self.width_ratio)
         y = int(y / self.height_ratio)
 
+        self.x = x
+        self.y = y
+
         self.canvas.coords(self.id, x, y)
         self.label.delete(self.adj)
 
         self.info = max_info
         adj_vol = max_info[0]
         self.adj = self.label.create_text(self.w/2, 3*self.h/4,
-                                          text=str(round(adj_vol, 2)))
+                                          text=str(round(adj_vol, 2)), font=("Purisa", 8))
         return max_info
 
     def calculate(self, x=None, y=None):
@@ -265,8 +278,8 @@ class Box:
             x = int(x * self.width_ratio)
             y = int(y * self.height_ratio)
 
-        w = 97
-        h = 55
+        w = self.w_actual
+        h = self.h_actual
 
         # crop image
         crop_img = self.img[y-1:y+h+1, x-1:x+w+1]
@@ -326,7 +339,7 @@ class ImageCanvas:
         x = 20
         for i in range(20):
             box = Box("Box"+str(i+1))
-            box.attach(self.canvas, x, self.max_height * (3/10))
+            box.attach(self.canvas, x, int(self.max_height * (3/10)))
             self.boxes.append(box)
             x += box.w + 5
 
@@ -335,6 +348,8 @@ class ImageCanvas:
         self.manual_move = False
         self.selected = None
         self.top = None
+        self.box_height = 55
+        self.box_width = 97
 
     def map_uint16_to_uint8(self, img, lower_bound=None, upper_bound=None):
         if lower_bound is not None and not(0 <= lower_bound < 2**16):
@@ -397,7 +412,7 @@ class ImageCanvas:
         for i in range(num):
             number = len(self.boxes) + 1
             box = Box("Box" + str(number))
-            box.attach(self.canvas, x, 40)
+            box.attach(self.canvas, x, 40, self.box_height, self.box_width)
             x += box.w + 10
             self.boxes.append(box)
 
@@ -414,7 +429,7 @@ class ImageCanvas:
             box.name = "Box"+str(i)
             box.label.delete(box.label_name)
             box.label_name = box.label.create_text(
-                box.w/2, box.h/4, text=box.name)
+                box.w/2, box.h/4, text=box.name, font=("Purisa", 10))
             i += 1
         source.detach()
 
@@ -460,3 +475,17 @@ class ImageCanvas:
     def ok(self, event=None):
         self.top.destroy()
         self.top = None
+
+    def change_box_dimensions(self, box_height, box_width):
+        self.box_height = box_height
+        self.box_width = box_width
+        for box in self.boxes:
+            box.detach()
+            box.attach(self.canvas, box.x, box.y, box_height, box_width)
+
+    def change_selected_box_dimension(self, box_height, box_width):
+        for box in self.boxes:
+            if box.name == self.selected.name:
+                box.detach()
+                box.attach(self.canvas, box.x, box.y, box_height, box_width)
+                break

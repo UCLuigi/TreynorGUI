@@ -34,7 +34,8 @@ class App:
         editmenu = Menu(menubar, tearoff=0)
         editmenu.add_command(label="Add box", command=self.create_box)
         editmenu.add_command(label="Add multiple boxes", command=self.create_multiple_boxes)
-        # editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
+        editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
+        editmenu.add_command(label="Change dimensions of selected box", command=self.change_selected_box_dimension)
         menubar.add_cascade(label="Edit", menu=editmenu)
 
         root.config(menu=menubar)
@@ -131,8 +132,36 @@ class App:
         if number is not None:
             self.image_canvas.add_box(number)
     
-    # def change_boxes_dimensions(self):
-    #     pass
+    def change_boxes_dimensions(self):
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
+        height = simpledialog.askinteger("Input", "How many pixels for the height?",
+                                 parent=self.root,
+                                 minvalue=1, maxvalue=self.screen_height)
+        width = simpledialog.askinteger("Input", "How many pixels for the width?",
+                                 parent=self.root,
+                                 minvalue=1, maxvalue=self.screen_width)
+        if width is not None and height is not None:
+            self.image_canvas.change_box_dimensions(height,width)
+            return
+
+    def change_selected_box_dimension(self):
+        if self.image_canvas is None:
+            messagebox.showerror('Error', 'You need to upload an image first')
+            return
+        if self.image_canvas.selected is None:
+            messagebox.showerror('Error', 'Please select a box first')
+            return
+        height = simpledialog.askinteger("Input", "How many pixels for the height?",
+                                 parent=self.root,
+                                 minvalue=1, maxvalue=self.screen_height)
+        width = simpledialog.askinteger("Input", "How many pixels for the width?",
+                                 parent=self.root,
+                                 minvalue=1, maxvalue=self.screen_width)
+        if width is not None and height is not None:
+            self.image_canvas.change_selected_box_dimension(height,width)
+            return
 
     def optimize_boxes(self):
         '''
@@ -204,16 +233,16 @@ class App:
         column_str = ",".join(columns) + "\n"
         f.write(column_str)
 
-        w = 97
-        h = 55
         t = "Unknown"
         a_quant = r_quant = "N/A"
-        total_pixels = w*h
-        area = ((self.scale/1000)**2) * (w*h)
 
         # Loop through all boxes
         for box in self.image_canvas.boxes:
             label = box.name
+            w = box.w_actual
+            h = box.h_actual
+            total_pixels = w*h
+            area = ((self.scale/1000)**2) * (w*h)
             num = label[3:]
             adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = box.info
             x,y = x_y
