@@ -602,41 +602,6 @@ class Box:
         self.info = info
         return info   
 
-    def hide(self):
-        id = self.id
-        label = self.label
-        self.canvas.delete(id)
-        label.destroy()
-
-    def show(self):
-        label = tk.Canvas(self.canvas, height=self.h,
-                          width=self.w, highlightthickness=1, highlightbackground="black")
-        self.label_name = label.create_text(
-            self.w/2, self.h/4, text=self.name, font=("Purisa", 10))
-        adj = self.info[0]
-        self.adj = label.create_text(
-            self.w/2, 3*self.h/4, text=str(round(adj, 2)), font=("Purisa", 8))
-        self.label = label
-        id = self.canvas.create_window(self.x, self.y, window=label, anchor="nw")
-        self.id = id
-        
-
-    # def flash(self):
-    #     id = self.id
-    #     self.canvas.delete(id)
-    #     sleep(0.25)
-    #     label = tk.Canvas(self.canvas, height=self.h,
-    #                       width=self.w, highlightthickness=1, highlightbackground="black")
-    #     self.label_name = label.create_text(
-    #         self.w/2, self.h/4, text=self.name, font=("Purisa", 10))
-
-    #     id = self.canvas.create_window(self.x, self.y, window=label, anchor="nw")
-    #     adj = self.info[0]
-    #     self.adj = self.label.create_text(
-    #         self.w/2, 3*self.h/4, text=str(round(adj, 2)), font=("Purisa", 8))
-
-    #     self.id = id
-
 
 class ImageCanvas:
 
@@ -835,9 +800,6 @@ class ImageCanvas:
         for box in self.boxes:
             box.attach(self.canvas, box.x, box.y, box.h_actual, box.w_actual)
         sleep(0.25)
-
-            
-
 
 if __name__ == '__main__':
     root = Tk()
