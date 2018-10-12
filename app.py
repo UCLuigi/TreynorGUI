@@ -146,11 +146,13 @@ class App:
             return
         height = simpledialog.askinteger("Input", "How many pixels for the height?",
                                  parent=self.root,
+                                 initialvalue=self.image_canvas.boxes[0].h_actual,
                                  minvalue=1, maxvalue=self.screen_height)
         if height is None:
             return
         width = simpledialog.askinteger("Input", "How many pixels for the width?",
                                  parent=self.root,
+                                 initialvalue=self.image_canvas.boxes[0].w_actual,
                                  minvalue=1, maxvalue=self.screen_width)
         if width is None:
             return
@@ -167,11 +169,13 @@ class App:
             return
         height = simpledialog.askinteger("Input", "How many pixels for the height?",
                                  parent=self.root,
+                                 initialvalue=self.image_canvas.selected.h_actual,
                                  minvalue=1, maxvalue=self.screen_height)
         if height is None:
             return
         width = simpledialog.askinteger("Input", "How many pixels for the width?",
                                  parent=self.root,
+                                 initialvalue=self.image_canvas.selected.w_actual,
                                  minvalue=1, maxvalue=self.screen_width)
         if width is None:
             return
@@ -287,7 +291,7 @@ class App:
 
         t = "Unknown"
         a_quant = r_quant = "N/A"
-        version = "v1.00"
+        version = "v1.01"
 
         # Loop through all boxes
         for box in self.image_canvas.boxes:
