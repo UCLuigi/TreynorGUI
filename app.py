@@ -11,6 +11,8 @@ import cv2
 from tkinter.ttk import Progressbar
 from tkinter import messagebox
 from time import sleep
+from time import gmtime, strftime
+import getpass
 
 
 class App:
@@ -266,7 +268,10 @@ class App:
         if f is None:
             return
 
-        columns = [ 'No.',
+        columns = [ 'Filename',
+                    'No.',
+                    'Username',
+                    'Date',
                     'Label',
                     'Type',
                     'Volume (OD)',
@@ -289,9 +294,12 @@ class App:
         column_str = ",".join(columns) + "\n"
         f.write(column_str)
 
+        filename = name + ".csv"
+        username = getpass.getuser()
+        date = strftime("%m/%d/%Y %H:%M", gmtime())
         t = "Unknown"
         a_quant = r_quant = "N/A"
-        version = "v1.01"
+        version = "v1.02"
 
         # Loop through all boxes
         for box in self.image_canvas.boxes:
@@ -303,7 +311,7 @@ class App:
             num = label[3:]
             adj, mean_b, vol, x_y, min_vol, max_vol, avg_vol, sd = box.info
             x,y = x_y
-            r = [num,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,
+            r = [filename,num,username,date,label,t,vol,adj,mean_b,a_quant,r_quant,total_pixels,
                     min_vol,max_vol,avg_vol,sd,area,x,y,w,h,version]
             row = list(map(str, r))
             row_str = ",".join(row) + "\n"
@@ -614,6 +622,7 @@ class ImageCanvas:
         self.max_width = i_width
         self.max_height = i_height
         self.img_info = cv2.imread(image_path, -1)
+        self.img_info[self.img_info > 65309] = float(3.654)
         self.map = mappings
 
         i = self.map_uint16_to_uint8(self.img_info)
