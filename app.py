@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+#version history
+#v1.00  Luis Alba   first release
+#v1.01  Luis Alba   autopopulate box width and height modals with current values
+#v1.02  LA/TT       fix bug that prevented analyzing some gel images
+#                   add file name, username, datetime to exported table
+#v1.03  TT          replaced "Treynor" at top of session window with name of opened file (and "MM Gel Densitometry Platform" otherwise)
+#                   current version number is accessible from File menu
+
+
+version = "v1.05"
+
 from tkinter import *
 import os
 from tkinter import filedialog, messagebox, simpledialog
@@ -11,7 +22,7 @@ import cv2
 from tkinter.ttk import Progressbar
 from tkinter import messagebox
 from time import sleep
-from time import gmtime, strftime
+from time import localtime, strftime
 import getpass
 
 
@@ -19,7 +30,7 @@ class App:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Treynor")
+        self.root.title("MM Gel Densitometry Platform, Version "+version)
         self.screen_width = root.winfo_screenwidth()
         self.screen_height = root.winfo_screenheight()
         self.image_canvas = None
@@ -34,6 +45,8 @@ class App:
         filemenu.add_command(label="Optimize Adj Vol",
                              command=self.optimize_boxes)
         filemenu.add_command(label="Export table", command=self.export)
+        filemenu.add_separator()
+        filemenu.add_command(label="You're using Version "+version)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=root.quit)
         menubar.add_cascade(label="File", menu=filemenu)
@@ -91,6 +104,7 @@ class App:
         self.scn_file = file_path
         self.img_path = img_path
         self.img = img
+        self.root.title(file_path.split("/")[-1])
         self.mappings = {}
 
         # Parse scn file
@@ -109,6 +123,13 @@ class App:
                 if l[:17] == '<scan_resolution>':
                     l = l[17:-18]
                     self.scale = float(l)
+                if l[:9] == '<size_pix':
+                    l = l.split("\"")
+                    # print(l)
+                    self.img_height = int(l[1])
+                    self.img_width = int(l[-2])
+                
+                
         self.setup()
 
     def setup(self):
@@ -119,8 +140,9 @@ class App:
         self.topframe = Frame(
             self.root, width=self.screen_width, height=self.screen_height)
         self.topframe.pack(fill=BOTH)
-        self.image_canvas = ImageCanvas(
-            self.topframe, self.img_path, self.mappings, self.screen_width, self.screen_height)
+        self.image_canvas = ImageCanvas(self.topframe, self.img_path, self.mappings,
+                                        self.screen_width,self.screen_height,
+                                        self.img_width, self.img_height)
 
     def create_box(self):
         '''
@@ -294,12 +316,11 @@ class App:
         column_str = ",".join(columns) + "\n"
         f.write(column_str)
 
-        filename = name + ".csv"
+        filename = f.name.split("/")[-1]
         username = getpass.getuser()
-        date = strftime("%m/%d/%Y %H:%M", gmtime())
+        date = strftime("%m/%d/%Y %H:%M", localtime())
         t = "Unknown"
         a_quant = r_quant = "N/A"
-        version = "v1.02"
 
         # Loop through all boxes
         for box in self.image_canvas.boxes:
@@ -429,7 +450,7 @@ class Box:
         self.name = name
         self.canvas = self.label = self.id = None
 
-    def attach(self, canvas, x=10, y=10, box_height=55, box_width=97):
+    def attach(self, canvas, x=10, y=10, box_height=55, box_width=97, info=None):
         if canvas is self.canvas:
             self.canvas.coords(self.id, x, y)
             self.x = x
@@ -445,9 +466,9 @@ class Box:
         if not canvas:
             return
 
-        self.h = int((box_height / 1293) * self.img_canvas.max_height)
+        self.h = int((box_height / self.img_canvas.actual_img_height) * self.img_canvas.max_height)
         self.h_actual = box_height
-        self.w = int((box_width / 2273) * self.img_canvas.max_width)
+        self.w = int((box_width / self.img_canvas.actual_img_width) * self.img_canvas.max_width)
         self.w_actual = box_width
 
         self.total_pixels = self.h_actual * self.w_actual
@@ -463,8 +484,14 @@ class Box:
         self.canvas = canvas
         self.label = label
         self.id = id
-        info = self.calculate()
-        adj = info[0]
+
+        if info is not None:
+            self.info = info
+            adj = info[0]
+        else:
+            info = self.calculate()
+            adj = info[0]
+
         self.adj = self.label.create_text(
             self.w/2, 3*self.h/4, text=str(round(adj, 2)), font=("Purisa", 8))
         label.focus_set()
@@ -511,8 +538,10 @@ class Box:
         x_org = canvas.winfo_rootx()
         y_org = canvas.winfo_rooty()
         # where the pointer is relative to the canvas widget:
-        x = event.x_root - x_org
-        y = event.y_root - y_org
+        x = event.x_root - x_org + 1
+        y = event.y_root - y_org + 1
+        # x = event.x_root - x_org
+        # y = event.y_root - y_org
         # compensate for initial pointer offset
         return x - self.x_off, y - self.y_off
 
@@ -617,10 +646,12 @@ class Box:
 
 class ImageCanvas:
 
-    def __init__(self, root, image_path, mappings, i_width, i_height):
+    def __init__(self, root, image_path, mappings, i_width, i_height, img_width, img_height):
         self.canvas = tk.Canvas(root, width=i_width, height=i_height)
         self.max_width = i_width
         self.max_height = i_height
+        self.actual_img_width = img_width
+        self.actual_img_height = img_height
         self.img_info = cv2.imread(image_path, -1)
         self.img_info[self.img_info > 65309] = float(3.654)
         self.map = mappings
@@ -811,7 +842,7 @@ class ImageCanvas:
         progressbar['value'] = 1
         progressbar.update()
         for box in self.boxes:
-            box.attach(self.canvas, box.x, box.y, box.h_actual, box.w_actual)
+            box.attach(self.canvas, box.x, box.y, box.h_actual, box.w_actual, box.info)
         sleep(0.25)
 
 if __name__ == '__main__':
