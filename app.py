@@ -125,10 +125,8 @@ class App:
                     self.scale = float(l)
                 if l[:9] == '<size_pix':
                     l = l.split("\"")
-                    # print(l)
                     self.img_height = int(l[1])
                     self.img_width = int(l[-2])
-                
                 
         self.setup()
 
@@ -653,7 +651,7 @@ class ImageCanvas:
         self.actual_img_width = img_width
         self.actual_img_height = img_height
         self.img_info = cv2.imread(image_path, -1)
-        self.img_info[self.img_info > 65309] = float(3.654)
+        self.img_info[self.img_info >= max(mappings.keys())] = float(max(mappings.values()))
         self.map = mappings
 
         i = self.map_uint16_to_uint8(self.img_info)
