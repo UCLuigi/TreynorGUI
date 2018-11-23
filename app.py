@@ -7,7 +7,8 @@
 #                   add file name, username, datetime to exported table
 #v1.03  TT          replaced "Treynor" at top of session window with name of opened file (and "MM Gel Densitometry Platform" otherwise)
 #                   current version number is accessible from File menu
-
+#v1.05  LA          fix bug that moved boxes from optimized position when flashing, and replaced some values
+#                   with values found in scn file
 
 version = "v1.05"
 
@@ -627,11 +628,9 @@ class Box:
         # Get mean background
         mean_b = 0
         for j in range(0, h+2):
-            mean_b += crop_img[j, 0] + \
-                crop_img[j, w+1]
+            mean_b += crop_img[j, 0] + crop_img[j, w+1]
         for i in range(1, w-1):
-            mean_b += crop_img[0, i] + \
-                crop_img[h+1, i]
+            mean_b += crop_img[0, i] + crop_img[h+1, i]
         mean_b /= ((w+2) * 2) + (h * 2)
 
         # Calculate adjusted volume
@@ -744,7 +743,7 @@ class ImageCanvas:
 
     def add_box(self, num=1):
         x = 20
-        for i in range(num):
+        for _ in range(num):
             number = len(self.boxes) + 1
             box = Box("Box" + str(number))
             box.attach(self.canvas, x, 40, self.box_height, self.box_width)
@@ -800,20 +799,6 @@ class ImageCanvas:
             answer = messagebox.askokcancel('Has not converged', 'Click \"OK\" to test for convergence.\nClick \"Cancel\" to leave boxes where they are.')
             if answer == True:
                 self.optimize_boxes()
-            
-            # self.top = tk.Toplevel(self.canvas)
-            # Label(self.top, text="Click \"Repeat Optimization\" to test for convergence. Click \"OK\" to leave boxes where they are.").pack()
-            # r = Button(self.top, text="Repeat Optimization",
-            #            command=self.optimize_boxes,highlightbackground='#3E4149')
-            # r.pack()
-            # ok = Button(self.top, text="OK", command=self.ok, bg="blue",highlightbackground='#3E4149')
-            # ok.focus_set()
-            # ok.bind('<Return>', self.ok)
-            # ok.pack()
-
-    # def ok(self, event=None):
-    #     self.top.destroy()
-    #     self.top = None
 
     def change_box_dimensions(self, box_height, box_width):
         self.box_height = box_height
