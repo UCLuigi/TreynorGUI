@@ -3,14 +3,16 @@
 #version history
 #v1.00  Luis Alba   first release
 #v1.01  Luis Alba   autopopulate box width and height modals with current values
-#v1.02  LA/TT       fix bug that prevented analyzing some gel images
+#v1.02  LA/TT       fixed bug that prevented analyzing some gel images
 #                   add file name, username, datetime to exported table
 #v1.03  TT          replaced "Treynor" at top of session window with name of opened file (and "MM Gel Densitometry Platform" otherwise)
 #                   current version number is accessible from File menu
-#v1.05  LA          fix bug that moved boxes from optimized position when flashing, and replaced some values
+#v1.05  LA          fixed bug that moved boxes from optimized position when flashing, and replaced some values
 #                   with values found in scn file
+#v1.06	TT          fixed bug reading height and width from .scn file
+#v1.07  TT          added keyboard shortcuts for app functions
 
-version = "v1.05"
+version = "v1.07"
 
 from tkinter import *
 import os
@@ -42,10 +44,10 @@ class App:
 
         # File menu
         filemenu = Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Open file", command=self.look_up_image)
-        filemenu.add_command(label="Optimize Adj Vol",
+        filemenu.add_command(label="Open file (n)", command=self.look_up_image)
+        filemenu.add_command(label="Optimize Adj Vol (o)",
                              command=self.optimize_boxes)
-        filemenu.add_command(label="Export table", command=self.export)
+        filemenu.add_command(label="Export table (e)", command=self.export)
         filemenu.add_separator()
         filemenu.add_command(label="You're using Version "+version)
         filemenu.add_separator()
@@ -54,17 +56,24 @@ class App:
 
         # Edit menu
         editmenu = Menu(menubar, tearoff=0)
-        editmenu.add_command(label="Add box", command=self.create_box)
-        editmenu.add_command(label="Add multiple boxes", command=self.create_multiple_boxes)
-        editmenu.add_command(label="Change dimensions of all boxes", command=self.change_boxes_dimensions)
-        editmenu.add_command(label="Change dimensions of selected box", command=self.change_selected_box_dimension)
-        editmenu.add_command(label="Flash boxes", command=self.flash_boxes)
+        editmenu.add_command(label="Add box (a)", command=self.create_box)
+        editmenu.add_command(label="Add multiple boxes (m)", command=self.create_multiple_boxes)
+        editmenu.add_command(label="Change dimensions of all boxes (c)", command=self.change_boxes_dimensions)
+        editmenu.add_command(label="Change dimensions of selected box (s)", command=self.change_selected_box_dimension)
+        editmenu.add_command(label="Flash boxes (f)", command=self.flash_boxes)
         menubar.add_cascade(label="Edit", menu=editmenu)
+        root.bind('<n>', self.look_up_image)
+        root.bind('<o>', self.optimize_boxes)
+        root.bind('<e>', self.export)
+        root.bind('<a>', self.create_box)
+        root.bind('<m>', self.create_multiple_boxes)
+        root.bind('<c>', self.change_boxes_dimensions)
+        root.bind('<s>', self.change_selected_box_dimension)
         root.bind('<f>', self.flash_once)
 
         root.config(menu=menubar)
 
-    def look_up_image(self):
+    def look_up_image(self, event):
         '''
         Function that looks for a tif image given an scn file.
         Error checks if it doesn't find image and if it's not 16-bit.
@@ -126,8 +135,12 @@ class App:
                     self.scale = float(l)
                 if l[:9] == '<size_pix':
                     l = l.split("\"")
-                    self.img_height = int(l[1])
-                    self.img_width = int(l[-2])
+                    if l[2]==' width=':
+                        self.img_height = int(l[1])
+                        self.img_width = int(l[-2])
+                    else:
+                        self.img_height = int(l[-2])
+                        self.img_width = int(l[1])
                 
         self.setup()
 
@@ -143,7 +156,7 @@ class App:
                                         self.screen_width,self.screen_height,
                                         self.img_width, self.img_height)
 
-    def create_box(self):
+    def create_box(self, event):
         '''
         Action from menu to add a box onto the ImageCanvas
         '''
@@ -153,7 +166,7 @@ class App:
             return
         self.image_canvas.add_box()
 
-    def create_multiple_boxes(self):
+    def create_multiple_boxes(self, event):
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
@@ -163,7 +176,7 @@ class App:
         if number is not None:
             self.image_canvas.add_box(number)
     
-    def change_boxes_dimensions(self):
+    def change_boxes_dimensions(self, event):
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
@@ -183,7 +196,7 @@ class App:
             self.image_canvas.change_box_dimensions(height,width)
             return
 
-    def change_selected_box_dimension(self):
+    def change_selected_box_dimension(self, event):
         if self.image_canvas is None:
             messagebox.showerror('Error', 'You need to upload an image first')
             return
@@ -206,7 +219,7 @@ class App:
             self.image_canvas.change_selected_box_dimension(height,width)
             return
 
-    def optimize_boxes(self):
+    def optimize_boxes(self, event):
         '''
         Action from menu to optimize volume of all boxes
         '''
@@ -257,7 +270,7 @@ class App:
             return
         self.image_canvas.flash_boxes()
 
-    def export(self):
+    def export(self, event):
         '''
         Action from menu to export information into a table
         '''
